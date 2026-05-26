@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router';
 import { Search, SlidersHorizontal } from 'lucide-react';
 import { MainLayout } from '../layouts/MainLayout';
 import { ProductGrid } from '../components/ProductGrid';
@@ -8,6 +9,7 @@ import type { Product } from '../types';
 import { mockApi } from '../services/mockApi';
 
 export function ProductsPage() {
+  const navigate = useNavigate();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -112,7 +114,7 @@ export function ProductsPage() {
         <ProductGrid
           products={products}
           loading={loading}
-          onProductClick={(product) => window.location.href = `/product/${product.id}`}
+          onProductClick={(product) => navigate(`/products/${product.id}`)}
         />
       </div>
     </MainLayout>

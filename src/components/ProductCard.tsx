@@ -1,4 +1,4 @@
-import { Heart, ShoppingCart, Star, CheckCircle2, X } from 'lucide-react';
+import { Heart, ShoppingCart, Star, CheckCircle2, X, Eye } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { toast } from 'sonner';
@@ -70,6 +70,7 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ product, onClick }: ProductCardProps) {
+  const navigate = useNavigate();
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
@@ -102,7 +103,18 @@ export function ProductCard({ product, onClick }: ProductCardProps) {
 
   const handleWishlist = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setIsWishlisted(!isWishlisted);
+    const next = !isWishlisted;
+    setIsWishlisted(next);
+    toast(next ? `Added to wishlist` : `Removed from wishlist`, {
+      description: product.name,
+      icon: <Heart size={16} className={next ? 'text-red-500 fill-red-500' : 'text-gray-400'} />,
+      duration: 2000,
+    });
+  };
+
+  const handleView = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigate(`/products/${product.id}`);
   };
 
   const discount = product.compareAtPrice
@@ -112,7 +124,7 @@ export function ProductCard({ product, onClick }: ProductCardProps) {
   return (
     <div
       className="group bg-white border border-grind-border rounded-lg overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer"
-      onClick={onClick}
+      onClick={onClick ?? (() => navigate(`/products/${product.id}`))}
     >
       <div className="relative aspect-square overflow-hidden bg-gray-100">
         {!imageLoaded && (
@@ -147,7 +159,8 @@ export function ProductCard({ product, onClick }: ProductCardProps) {
 
         <button
           onClick={handleWishlist}
-          className={`absolute top-3 right-3 p-2 rounded-full backdrop-blur-sm transition-all duration-200 ${
+          title={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
+          className={`absolute top-3 right-3 p-2 rounded-full backdrop-blur-sm transition-all duration-200 cursor-pointer ${
             product.trending ? 'top-14' : ''
           } ${
             isWishlisted
@@ -158,17 +171,25 @@ export function ProductCard({ product, onClick }: ProductCardProps) {
           <Heart size={18} fill={isWishlisted ? 'currentColor' : 'none'} />
         </button>
 
-        <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-          <Button
-            size="sm"
-            fullWidth
-            onClick={handleAddToCart}
-            loading={isAdding}
-            className="bg-white text-grind-black hover:bg-white/90"
-          >
-            {!isAdding && <ShoppingCart size={16} />}
-            {isAdding ? 'Adding...' : 'Quick Add'}
-          </Button>
+        <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              onClick={handleAddToCart}
+              loading={isAdding}
+              className="flex-1 bg-white text-grind-black hover:bg-white/90 cursor-pointer"
+            >
+              {!isAdding && <ShoppingCart size={15} />}
+              {isAdding ? 'Adding...' : 'Quick Add'}
+            </Button>
+            <button
+              onClick={handleView}
+              title="View product"
+              className="p-2 bg-white/90 hover:bg-white text-grind-black rounded-md transition-colors cursor-pointer"
+            >
+              <Eye size={15} />
+            </button>
+          </div>
         </div>
       </div>
 

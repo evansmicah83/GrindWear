@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router';
 import { ArrowRight, TrendingUp, Sparkles, Zap, Shield, Truck, RotateCcw } from 'lucide-react';
 import { MainLayout } from '../layouts/MainLayout';
 import { ProductCard } from '../components/ProductCard';
@@ -20,6 +21,7 @@ function SkeletonCard() {
 }
 
 export function HomePage() {
+  const navigate = useNavigate();
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
   const [trendingProducts, setTrendingProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -174,7 +176,7 @@ export function HomePage() {
                   <ProductCard
                     key={product.id}
                     product={product}
-                    onClick={() => window.location.href = `/products`}
+                    onClick={() => navigate(`/products/${product.id}`)}
                   />
                 ))}
           </div>
@@ -205,7 +207,7 @@ export function HomePage() {
                 <ProductCard
                   key={product.id}
                   product={product}
-                  onClick={() => window.location.href = `/products`}
+                  onClick={() => navigate(`/products/${product.id}`)}
                 />
               ))}
         </div>
