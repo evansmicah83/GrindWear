@@ -1,0 +1,785 @@
+<<<<<<< HEAD
+Create a modern, production-quality FULL FRONTEND ONLY responsive web application design and prototype for a fashion e-commerce platform called “GRIND BYTE CLOTHING BRAND”.
+
+The frontend should be designed for:
+
+* React
+* Tailwind CSS
+* Context API state management
+* Socket.io real-time communication
+* Easy future integration with a Node.js + Express + MySQL backend
+
+IMPORTANT:
+This is FRONTEND ONLY for now.
+All backend/API functionality should use:
+
+* mocked data
+* fake async API calls
+* placeholder service layers
+* reusable API utilities
+* clean architecture
+  so that later integration with real Node.js APIs becomes extremely easy.
+
+The design must feel like a real modern scalable startup fashion brand.
+
+==================================================
+OVERALL DESIGN STYLE
+====================
+
+Style:
+
+* Modern
+* Minimal
+* Premium streetwear aesthetic
+* Clean layouts
+* High-end clothing brand vibe
+* Inspired by:
+
+  * Nike
+  * Zara
+  * ASOS
+  * Fashion Nova
+  * H&M modern redesigns
+
+Design priorities:
+
+* Extremely responsive
+* Mobile-first
+* Smooth UX
+* Realistic animations
+* Reusable components
+* Accessibility-friendly
+* Scalable architecture
+* Real-time feel
+
+The app should look like a REAL deployed SaaS/e-commerce product.
+
+==================================================
+COLOR SYSTEM
+============
+
+Primary:
+
+* Matte Black #111111
+
+Secondary:
+
+* Pure White #FFFFFF
+
+Accent:
+
+* Electric Blue #2563EB
+
+Optional Accent:
+
+* Soft Purple #7C3AED
+
+Success:
+
+* #10B981
+
+Danger:
+
+* #EF4444
+
+Warning:
+
+* #F59E0B
+
+Background:
+
+* #F8FAFC
+
+Card Background:
+
+* #FFFFFF
+
+Border:
+
+* #E5E7EB
+
+==================================================
+TYPOGRAPHY SYSTEM
+=================
+
+Font Family:
+
+* Inter
+
+Headings:
+
+* Bold
+* Tight spacing
+* Fashion brand feel
+
+Body:
+
+* Clean readable modern typography
+
+Responsive font scaling required.
+
+==================================================
+DESIGN SYSTEM REQUIRED
+======================
+
+Create a FULL DESIGN SYSTEM PAGE including:
+
+1. Typography scale
+2. Color palette
+3. Buttons
+4. Input fields
+5. Search bars
+6. Cards
+7. Product cards
+8. Badges
+9. Modals
+10. Toast notifications
+11. Tables
+12. Dropdowns
+13. Navigation items
+14. Sidebar styles
+15. Loading skeletons
+16. Empty states
+17. Pagination
+18. Tabs
+19. Mobile navigation
+20. Chat components
+21. Real-time notification UI
+22. Avatar system
+23. Status indicators
+24. Form validation states
+25. Cart item components
+
+Everything should feel consistent and reusable.
+
+==================================================
+APPLICATION ARCHITECTURE
+========================
+
+Design the frontend architecture visually and structurally around:
+
+* Context API
+* Service layer
+* Socket.io event system
+* Mock API services
+* Component reusability
+
+Create realistic frontend architecture sections for:
+
+* contexts/
+* services/
+* hooks/
+* components/
+* pages/
+* layouts/
+* sockets/
+* utils/
+
+Include mock loading states everywhere.
+
+==================================================
+PAGES REQUIRED
+==============
+
+1. LANDING PAGE
+
+* Hero section
+* Featured clothing
+* Categories
+* Trending products
+* Newsletter section
+* Animated CTA
+* Responsive navbar
+* Footer
+* Promotional banners
+
+2. AUTHENTICATION
+
+* Login
+* Register
+* Forgot password
+* OTP verification UI
+* Social login placeholders
+
+3. PRODUCT LISTING PAGE
+
+* Responsive product grid
+* Filters
+* Sorting
+* Search bar
+* Category tabs
+* Loading skeletons
+* Infinite scroll feel
+* Mock API loading states
+
+4. PRODUCT DETAILS PAGE
+
+* Large gallery
+* Size selector
+* Quantity selector
+* Product description
+* Reviews UI
+* Add to cart
+* Wishlist
+* Recommended products
+* Real-time stock indicator (mocked)
+
+5. CART PAGE
+
+* Cart items
+* Quantity update
+* Remove item
+* Coupon input
+* Cart summary
+* Empty cart state
+
+6. CHECKOUT PAGE
+
+* Shipping form
+* Payment UI placeholders
+* Order summary
+* Responsive checkout flow
+* Multi-step form
+
+7. USER DASHBOARD
+
+* Profile
+* Orders
+* Wishlist
+* Notifications
+* Address management
+* Settings
+
+8. ADMIN DASHBOARD
+   Modern admin panel with:
+
+* Sidebar
+* Analytics cards
+* Charts
+* Product management
+* User management
+* Order management
+* Chat management
+* Notifications center
+
+9. CHAT SYSTEM
+   Realtime UI using Socket.io structure:
+
+* User-admin chat
+* Typing indicators
+* Online/offline status
+* Message timestamps
+* Modern chat bubbles
+* Mobile responsive chat layout
+
+10. NOTIFICATIONS SYSTEM
+    Realtime notification dropdown:
+
+* Order updates
+* New messages
+* Product alerts
+* Toast system
+* Notification center page
+
+11. SEARCH EXPERIENCE
+    Modern floating search experience:
+
+* Instant search UI
+* Suggestions
+* Recent searches
+* Trending searches
+* Mock async search
+
+12. ERROR & SYSTEM PAGES
+
+* 404 page
+* Maintenance page
+* Empty states
+* Error states
+* Offline state UI
+
+==================================================
+REALTIME UX REQUIREMENTS
+========================
+
+Design mock realtime experiences using:
+
+* Socket.io placeholders
+* Typing indicators
+* Live notifications
+* Live order status updates
+* Presence indicators
+* Dynamic badges
+* Animated updates
+
+The UI should FEEL realtime even though data is mocked.
+
+==================================================
+RESPONSIVENESS
+==============
+
+Design for:
+
+* Mobile
+* Tablet
+* Desktop
+* Large screens
+
+Include:
+
+* Responsive navbar
+* Collapsible sidebar
+* Mobile bottom navigation
+* Adaptive grids
+* Responsive spacing system
+
+Must feel premium on mobile.
+
+==================================================
+COMPONENT DESIGN REQUIREMENTS
+=============================
+
+Use:
+
+* Glassmorphism lightly
+* Soft shadows
+* Rounded corners
+* Smooth hover states
+* Framer-motion style animation ideas
+* Skeleton loaders
+* Smooth transitions
+
+Avoid:
+
+* Clutter
+* Overly colorful UI
+* Old-fashioned admin layouts
+
+==================================================
+MOCK DATA REQUIREMENTS
+======================
+
+All pages should demonstrate:
+
+* Mock API calls
+* Fake loading delays
+* Fake realtime updates
+* Placeholder backend integration points
+* Service abstraction layer
+
+Design should clearly support:
+future Node.js integration with minimal frontend changes.
+
+==================================================
+FIGMA REQUIREMENTS
+==================
+
+Create:
+
+* Full design system
+* Component library
+* Auto-layout usage
+* Proper constraints
+* Responsive variants
+* Organized pages
+* Developer-friendly structure
+* Named reusable components
+* Clean spacing system
+* Tailwind-friendly sizing
+
+Everything should be export-ready for React + Tailwind implementation.
+
+The final result should look like a professional startup-grade modern fashion e-commerce platform frontend ready for real backend integration later.
+=======
+Create a modern, production-quality FULL FRONTEND ONLY responsive web application design and prototype for a fashion e-commerce platform called “GRIND BYTE CLOTHING BRAND”.
+
+The frontend should be designed for:
+
+* React
+* Tailwind CSS
+* Context API state management
+* Socket.io real-time communication
+* Easy future integration with a Node.js + Express + MySQL backend
+
+IMPORTANT:
+This is FRONTEND ONLY for now.
+All backend/API functionality should use:
+
+* mocked data
+* fake async API calls
+* placeholder service layers
+* reusable API utilities
+* clean architecture
+  so that later integration with real Node.js APIs becomes extremely easy.
+
+The design must feel like a real modern scalable startup fashion brand.
+
+==================================================
+OVERALL DESIGN STYLE
+====================
+
+Style:
+
+* Modern
+* Minimal
+* Premium streetwear aesthetic
+* Clean layouts
+* High-end clothing brand vibe
+* Inspired by:
+
+  * Nike
+  * Zara
+  * ASOS
+  * Fashion Nova
+  * H&M modern redesigns
+
+Design priorities:
+
+* Extremely responsive
+* Mobile-first
+* Smooth UX
+* Realistic animations
+* Reusable components
+* Accessibility-friendly
+* Scalable architecture
+* Real-time feel
+
+The app should look like a REAL deployed SaaS/e-commerce product.
+
+==================================================
+COLOR SYSTEM
+============
+
+Primary:
+
+* Matte Black #111111
+
+Secondary:
+
+* Pure White #FFFFFF
+
+Accent:
+
+* Electric Blue #2563EB
+
+Optional Accent:
+
+* Soft Purple #7C3AED
+
+Success:
+
+* #10B981
+
+Danger:
+
+* #EF4444
+
+Warning:
+
+* #F59E0B
+
+Background:
+
+* #F8FAFC
+
+Card Background:
+
+* #FFFFFF
+
+Border:
+
+* #E5E7EB
+
+==================================================
+TYPOGRAPHY SYSTEM
+=================
+
+Font Family:
+
+* Inter
+
+Headings:
+
+* Bold
+* Tight spacing
+* Fashion brand feel
+
+Body:
+
+* Clean readable modern typography
+
+Responsive font scaling required.
+
+==================================================
+DESIGN SYSTEM REQUIRED
+======================
+
+Create a FULL DESIGN SYSTEM PAGE including:
+
+1. Typography scale
+2. Color palette
+3. Buttons
+4. Input fields
+5. Search bars
+6. Cards
+7. Product cards
+8. Badges
+9. Modals
+10. Toast notifications
+11. Tables
+12. Dropdowns
+13. Navigation items
+14. Sidebar styles
+15. Loading skeletons
+16. Empty states
+17. Pagination
+18. Tabs
+19. Mobile navigation
+20. Chat components
+21. Real-time notification UI
+22. Avatar system
+23. Status indicators
+24. Form validation states
+25. Cart item components
+
+Everything should feel consistent and reusable.
+
+==================================================
+APPLICATION ARCHITECTURE
+========================
+
+Design the frontend architecture visually and structurally around:
+
+* Context API
+* Service layer
+* Socket.io event system
+* Mock API services
+* Component reusability
+
+Create realistic frontend architecture sections for:
+
+* contexts/
+* services/
+* hooks/
+* components/
+* pages/
+* layouts/
+* sockets/
+* utils/
+
+Include mock loading states everywhere.
+
+==================================================
+PAGES REQUIRED
+==============
+
+1. LANDING PAGE
+
+* Hero section
+* Featured clothing
+* Categories
+* Trending products
+* Newsletter section
+* Animated CTA
+* Responsive navbar
+* Footer
+* Promotional banners
+
+2. AUTHENTICATION
+
+* Login
+* Register
+* Forgot password
+* OTP verification UI
+* Social login placeholders
+
+3. PRODUCT LISTING PAGE
+
+* Responsive product grid
+* Filters
+* Sorting
+* Search bar
+* Category tabs
+* Loading skeletons
+* Infinite scroll feel
+* Mock API loading states
+
+4. PRODUCT DETAILS PAGE
+
+* Large gallery
+* Size selector
+* Quantity selector
+* Product description
+* Reviews UI
+* Add to cart
+* Wishlist
+* Recommended products
+* Real-time stock indicator (mocked)
+
+5. CART PAGE
+
+* Cart items
+* Quantity update
+* Remove item
+* Coupon input
+* Cart summary
+* Empty cart state
+
+6. CHECKOUT PAGE
+
+* Shipping form
+* Payment UI placeholders
+* Order summary
+* Responsive checkout flow
+* Multi-step form
+
+7. USER DASHBOARD
+
+* Profile
+* Orders
+* Wishlist
+* Notifications
+* Address management
+* Settings
+
+8. ADMIN DASHBOARD
+   Modern admin panel with:
+
+* Sidebar
+* Analytics cards
+* Charts
+* Product management
+* User management
+* Order management
+* Chat management
+* Notifications center
+
+9. CHAT SYSTEM
+   Realtime UI using Socket.io structure:
+
+* User-admin chat
+* Typing indicators
+* Online/offline status
+* Message timestamps
+* Modern chat bubbles
+* Mobile responsive chat layout
+
+10. NOTIFICATIONS SYSTEM
+    Realtime notification dropdown:
+
+* Order updates
+* New messages
+* Product alerts
+* Toast system
+* Notification center page
+
+11. SEARCH EXPERIENCE
+    Modern floating search experience:
+
+* Instant search UI
+* Suggestions
+* Recent searches
+* Trending searches
+* Mock async search
+
+12. ERROR & SYSTEM PAGES
+
+* 404 page
+* Maintenance page
+* Empty states
+* Error states
+* Offline state UI
+
+==================================================
+REALTIME UX REQUIREMENTS
+========================
+
+Design mock realtime experiences using:
+
+* Socket.io placeholders
+* Typing indicators
+* Live notifications
+* Live order status updates
+* Presence indicators
+* Dynamic badges
+* Animated updates
+
+The UI should FEEL realtime even though data is mocked.
+
+==================================================
+RESPONSIVENESS
+==============
+
+Design for:
+
+* Mobile
+* Tablet
+* Desktop
+* Large screens
+
+Include:
+
+* Responsive navbar
+* Collapsible sidebar
+* Mobile bottom navigation
+* Adaptive grids
+* Responsive spacing system
+
+Must feel premium on mobile.
+
+==================================================
+COMPONENT DESIGN REQUIREMENTS
+=============================
+
+Use:
+
+* Glassmorphism lightly
+* Soft shadows
+* Rounded corners
+* Smooth hover states
+* Framer-motion style animation ideas
+* Skeleton loaders
+* Smooth transitions
+
+Avoid:
+
+* Clutter
+* Overly colorful UI
+* Old-fashioned admin layouts
+
+==================================================
+MOCK DATA REQUIREMENTS
+======================
+
+All pages should demonstrate:
+
+* Mock API calls
+* Fake loading delays
+* Fake realtime updates
+* Placeholder backend integration points
+* Service abstraction layer
+
+Design should clearly support:
+future Node.js integration with minimal frontend changes.
+
+==================================================
+FIGMA REQUIREMENTS
+==================
+
+Create:
+
+* Full design system
+* Component library
+* Auto-layout usage
+* Proper constraints
+* Responsive variants
+* Organized pages
+* Developer-friendly structure
+* Named reusable components
+* Clean spacing system
+* Tailwind-friendly sizing
+
+Everything should be export-ready for React + Tailwind implementation.
+
+The final result should look like a professional startup-grade modern fashion e-commerce platform frontend ready for real backend integration later.
+>>>>>>> c7a65a697a1ecd06657ff6683bed878a5fd3c14a

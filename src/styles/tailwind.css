@@ -1,0 +1,16 @@
+@import 'tailwindcss' source(none);
+@source '../**/*.{js,ts,jsx,tsx}';
+
+@import 'tw-animate-css';
+
+@theme {
+  --color-grind-black: #111111;
+  --color-grind-white: #ffffff;
+  --color-grind-blue: #2563eb;
+  --color-grind-purple: #7c3aed;
+  --color-grind-success: #10b981;
+  --color-grind-danger: #ef4444;
+  --color-grind-warning: #f59e0b;
+  --color-grind-background: #f8fafc;
+  --color-grind-border: #e5e7eb;
+}
