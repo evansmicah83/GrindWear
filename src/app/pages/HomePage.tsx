@@ -61,8 +61,12 @@ export function HomePage() {
           backgroundImage: `url(${grindBg})`,
           backgroundSize: 'cover',
           backgroundPosition: 'center center',
+          backgroundAttachment: 'scroll',
+          backgroundRepeat: 'no-repeat',
           opacity: 0.75,
           pointerEvents: 'none',
+          width: '100%',
+          height: '100%',
         }} />
         {/* Subtle overlay just enough to keep text readable */}
         <div style={{
