@@ -47,7 +47,7 @@ export function HomePage() {
       {/* ── HERO ── */}
       <section
         style={{
-          minHeight: '90vh',
+          minHeight: '100svh',
           display: 'flex',
           alignItems: 'center',
           position: 'relative',
@@ -77,7 +77,9 @@ export function HomePage() {
         <div style={{ position: 'absolute', top: 0, right: 0, width: '500px', height: '500px', borderRadius: '50%', filter: 'blur(80px)', pointerEvents: 'none', background: 'radial-gradient(circle, rgba(37,99,235,0.25) 0%, transparent 70%)' }} />
         <div style={{ position: 'absolute', bottom: 0, left: 0, width: '400px', height: '400px', borderRadius: '50%', filter: 'blur(80px)', pointerEvents: 'none', background: 'radial-gradient(circle, rgba(124,58,237,0.2) 0%, transparent 70%)' }} />
 
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 w-full" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full"
+          style={{ paddingTop: '5rem', paddingBottom: '7rem', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}
+        >
           <motion.div variants={fadeUp} initial="hidden" animate="show" custom={0}
             className="inline-flex items-center gap-2 mb-8 px-4 py-2 rounded-full border"
             style={{ backgroundColor: 'rgba(255,255,255,0.08)', borderColor: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(8px)' }}
