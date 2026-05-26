@@ -1,11 +1,68 @@
-import { Heart, ShoppingCart, Star, Check } from 'lucide-react';
+import { Heart, ShoppingCart, Star, CheckCircle2, X } from 'lucide-react';
 import { useState } from 'react';
+import { useNavigate } from 'react-router';
 import { toast } from 'sonner';
 import type { Product } from '../types';
 import { formatPrice } from '../../lib/utils';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
 import { useCart } from '../contexts/CartContext';
+
+interface CartToastProps {
+  product: Product;
+  size: string;
+  color: string;
+  toastId: string | number;
+}
+
+function CartToast({ product, size, color, toastId }: CartToastProps) {
+  const navigate = useNavigate();
+
+  return (
+    <div
+      className="flex items-start gap-3 bg-white border border-gray-100 rounded-2xl shadow-2xl p-4 w-[340px] animate-in slide-in-from-right-5 fade-in duration-300"
+      style={{ boxShadow: '0 8px 40px rgba(0,0,0,0.13)' }}
+    >
+      {/* Product image */}
+      <div className="relative shrink-0 w-16 h-16 rounded-xl overflow-hidden bg-gray-100">
+        <img
+          src={product.images[0]}
+          alt={product.name}
+          className="w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 flex items-center justify-center bg-green-500/80 rounded-xl">
+          <CheckCircle2 size={28} className="text-white drop-shadow" />
+        </div>
+      </div>
+
+      {/* Info */}
+      <div className="flex-1 min-w-0">
+        <p className="text-[11px] font-semibold uppercase tracking-widest text-green-600 mb-0.5">Added to cart</p>
+        <p className="font-bold text-gray-900 text-sm leading-tight line-clamp-1">{product.name}</p>
+        <p className="text-xs text-gray-500 mt-0.5">
+          {size} &nbsp;·&nbsp; {color}
+        </p>
+        <p className="text-sm font-bold text-gray-900 mt-1">{formatPrice(product.price)}</p>
+
+        <button
+          onClick={() => { toast.dismiss(toastId); navigate('/cart'); }}
+          className="mt-2 w-full flex items-center justify-center gap-1.5 bg-gray-900 hover:bg-gray-700 text-white text-xs font-semibold py-1.5 rounded-lg transition-colors"
+        >
+          <ShoppingCart size={13} />
+          View Cart
+        </button>
+      </div>
+
+      {/* Dismiss */}
+      <button
+        onClick={() => toast.dismiss(toastId)}
+        className="shrink-0 text-gray-400 hover:text-gray-700 transition-colors mt-0.5"
+      >
+        <X size={16} />
+      </button>
+    </div>
+  );
+}
 
 interface ProductCardProps {
   product: Product;
@@ -24,12 +81,21 @@ export function ProductCard({ product, onClick }: ProductCardProps) {
 
     await new Promise(resolve => setTimeout(resolve, 300));
 
-    addItem(product, product.sizes[0], product.colors[0], 1);
+    const size = product.sizes[0];
+    const color = product.colors[0];
+    addItem(product, size, color, 1);
 
-    toast.success(`${product.name} added to cart!`, {
-      description: `Size: ${product.sizes[0]} | Color: ${product.colors[0]}`,
-      icon: <Check className="text-green-600" />
-    });
+    toast.custom(
+      (t) => (
+        <CartToast
+          product={product}
+          size={size}
+          color={color}
+          toastId={t}
+        />
+      ),
+      { duration: 4000, position: 'top-right' }
+    );
 
     setIsAdding(false);
   };
