@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import type { User } from '../types';
-import { mockApi } from '../services/mockApi';
+import { api } from '../services/api';
 
 interface AuthContextType {
   user: User | null;
@@ -18,68 +18,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const savedUser = localStorage.getItem('grind-byte-user');
-    if (savedUser) {
-      try {
-        setUser(JSON.parse(savedUser));
-      } catch (error) {
-        console.error('Failed to parse saved user', error);
-      }
+    const token = localStorage.getItem('grind-token');
+    if (token) {
+      api.me().then(u => setUser(u)).catch(() => localStorage.removeItem('grind-token')).finally(() => setIsLoading(false));
+    } else {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   }, []);
 
   const login = async (email: string, password: string) => {
-    setIsLoading(true);
-    try {
-      const userData = await mockApi.login(email, password);
-      setUser(userData);
-      localStorage.setItem('grind-byte-user', JSON.stringify(userData));
-    } catch (error) {
-      throw new Error('Login failed');
-    } finally {
-      setIsLoading(false);
-    }
+    const { token, user: u } = await api.login(email, password);
+    localStorage.setItem('grind-token', token);
+    setUser(u);
   };
 
-  const register = async (data: { email: string; password: string; name: string }) => {
-    setIsLoading(true);
-    try {
-      const userData = await mockApi.register(data);
-      setUser(userData);
-      localStorage.setItem('grind-byte-user', JSON.stringify(userData));
-    } catch (error) {
-      throw new Error('Registration failed');
-    } finally {
-      setIsLoading(false);
-    }
+  const register = async ({ email, password, name }: { email: string; password: string; name: string }) => {
+    const { token, user: u } = await api.register(email, password, name);
+    localStorage.setItem('grind-token', token);
+    setUser(u);
   };
 
   const logout = () => {
     setUser(null);
-    localStorage.removeItem('grind-byte-user');
+    localStorage.removeItem('grind-token');
   };
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        isAuthenticated: !!user,
-        isLoading,
-        login,
-        register,
-        logout
-      }}
-    >
+    <AuthContext.Provider value={{ user, isAuthenticated: !!user, isLoading, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   );
 }
 
 export function useAuth() {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error('useAuth must be used within AuthProvider');
+  return ctx;
 }

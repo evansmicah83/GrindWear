@@ -5,7 +5,7 @@ import { Button } from '../components/ui/button';
 import { Card } from '../components/ui/card';
 import { formatPrice, formatDate } from '../../lib/utils';
 import type { Order } from '../types';
-import { backendEmulator } from '../services/backendEmulator';
+import { api } from '../services/api';
 
 export function OrderConfirmationPage() {
   const [order, setOrder] = useState<Order | null>(null);
@@ -24,13 +24,7 @@ export function OrderConfirmationPage() {
 
   const loadOrder = async (orderId: string) => {
     try {
-      const orderData = await backendEmulator.getOrder(orderId);
-      setOrder(orderData);
-    } catch (error) {
-      console.error('Failed to load order', error);
-    } finally {
-      setLoading(false);
-    }
+    api.getOrder(orderId).then(setOrder).catch(() => {}).finally(() => setLoading(false));
   };
 
   if (loading) {

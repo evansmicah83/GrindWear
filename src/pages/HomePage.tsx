@@ -4,7 +4,7 @@ import { ArrowRight, TrendingUp, Sparkles, Zap, Shield, Truck, RotateCcw } from 
 import { MainLayout } from '../layouts/MainLayout';
 import { ProductCard } from '../components/ProductCard';
 import type { Product, Category } from '../types';
-import { mockApi } from '../services/mockApi';
+import { api } from '../services/api';
 
 function SkeletonCard() {
   return (
@@ -29,9 +29,9 @@ export function HomePage() {
 
   useEffect(() => {
     Promise.all([
-      mockApi.getFeaturedProducts(),
-      mockApi.getTrendingProducts(),
-      mockApi.getCategories()
+      api.getProducts({ featured: 'true' }),
+      api.getProducts({ trending: 'true' }),
+      api.getProducts()
     ]).then(([featured, trending, cats]) => {
       setFeaturedProducts(featured);
       setTrendingProducts(trending);

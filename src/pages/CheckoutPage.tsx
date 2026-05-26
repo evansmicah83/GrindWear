@@ -7,7 +7,7 @@ import { Card } from '../components/ui/card';
 import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
 import { formatPrice } from '../../lib/utils';
-import { backendEmulator } from '../services/backendEmulator';
+import { api } from '../services/api';
 import { toast } from 'sonner';
 import type { Address } from '../types';
 
@@ -73,27 +73,27 @@ export function CheckoutPage() {
         cardCVV: paymentMethod === 'card' ? paymentData.cardCVV : undefined
       };
 
-      const result = await backendEmulator.createOrder({
-        items,
+      const orderItems = items.map(item => ({
+        id: item.id,
+        productId: item.product.id,
+        productName: item.product.name,
+        productImage: item.product.images[0],
+        size: item.size,
+        color: item.color,
+        quantity: item.quantity,
+        price: item.product.price,
+      }));
+
+      const order = await api.createOrder({
+        items: orderItems,
         total: finalTotal,
         shippingAddress,
-        paymentDetails
+        paymentMethod,
       });
 
-      if (result.success && result.order) {
-        toast.success('Order placed successfully!', {
-          description: `Order ID: ${result.order.id}`,
-          duration: 5000
-        });
-
-        clearCart();
-
-        setTimeout(() => {
-          window.location.href = `/order-confirmation?orderId=${result.order!.id}`;
-        }, 1500);
-      } else {
-        throw new Error(result.error || 'Payment failed');
-      }
+      toast.success('Order placed successfully!', { description: `Order ID: ${order.id}`, duration: 5000 });
+      clearCart();
+      setTimeout(() => { window.location.href = `/order-confirmation?orderId=${order.id}`; }, 1500);
     } catch (error: any) {
       toast.error('Payment failed', {
         description: error.message || 'Please try again'

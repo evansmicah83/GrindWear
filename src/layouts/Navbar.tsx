@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router';
 import { Search, ShoppingCart, User, Menu, X, Bell, Heart } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -12,11 +13,22 @@ const navigation = [
 ];
 
 export function Navbar() {
+  const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const { itemCount } = useCart();
-  const { isAuthenticated, logout } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const { unreadCount } = useNotifications();
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/products?search=${encodeURIComponent(searchQuery.trim())}`);
+      setSearchOpen(false);
+      setSearchQuery('');
+    }
+  };
 
   return (
     <nav style={{ backgroundColor: '#fff', borderBottom: '1px solid #e5e7eb', position: 'sticky', top: 0, zIndex: 50 }}>
@@ -94,9 +106,16 @@ export function Navbar() {
             </a>
 
             {isAuthenticated ? (
-              <a href="/dashboard" className="p-2 rounded-lg hover:bg-gray-100 transition-colors" aria-label="Account">
-                <User size={20} className="text-gray-700" />
-              </a>
+              <>
+                <a href="/dashboard" className="p-2 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer" aria-label="Account">
+                  <User size={20} className="text-gray-700" />
+                </a>
+                {user?.role === 'admin' && (
+                  <a href="/admin" className="hidden sm:flex items-center gap-1 px-3 py-1.5 bg-purple-600 text-white rounded-lg text-xs font-semibold hover:bg-purple-700 transition-colors cursor-pointer">
+                    Admin
+                  </a>
+                )}
+              </>
             ) : (
               <a
                 href="/login"
@@ -112,17 +131,19 @@ export function Navbar() {
         {/* Search bar */}
         {searchOpen && (
           <div style={{ paddingBottom: '12px' }}>
-            <div style={{ position: 'relative' }}>
+            <form onSubmit={handleSearch} style={{ position: 'relative' }}>
               <Search style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#9ca3af' }} size={18} />
               <input
                 type="search"
                 placeholder="Search products, categories..."
                 autoFocus
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
                 style={{ width: '100%', paddingLeft: '40px', paddingRight: '16px', paddingTop: '12px', paddingBottom: '12px', border: '1px solid #e5e7eb', borderRadius: '10px', fontSize: '0.875rem', outline: 'none', backgroundColor: '#f9fafb' }}
                 onFocus={(e) => { e.target.style.borderColor = '#2563eb'; e.target.style.boxShadow = '0 0 0 3px rgba(37,99,235,0.1)'; }}
                 onBlur={(e) => { e.target.style.borderColor = '#e5e7eb'; e.target.style.boxShadow = 'none'; }}
               />
-            </div>
+            </form>
           </div>
         )}
       </div>

@@ -6,7 +6,7 @@ import { ProductGrid } from '../components/ProductGrid';
 import { Input } from '../components/ui/input';
 import { Button } from '../components/ui/button';
 import type { Product } from '../types';
-import { mockApi } from '../services/mockApi';
+import { api } from '../services/api';
 
 export function ProductsPage() {
   const navigate = useNavigate();
@@ -23,7 +23,7 @@ export function ProductsPage() {
   const loadProducts = async () => {
     setLoading(true);
     try {
-      const data = await mockApi.getProducts({ search, sort: sortBy });
+      const data = await api.getProducts({ search, sort: sortBy });
       setProducts(data);
     } catch (error) {
       console.error('Failed to load products', error);
