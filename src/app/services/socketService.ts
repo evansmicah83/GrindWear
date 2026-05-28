@@ -6,7 +6,7 @@ class SocketService {
   private mockMode = true;
   private listeners: Map<string, Set<Function>> = new Map();
 
-  connect(url: string = 'ws://localhost:3001') {
+  connect(url: string = import.meta.env.VITE_API_URL || 'http://localhost:3001') {
     if (this.mockMode) {
       console.log('[Socket] Mock mode enabled - simulating real-time events');
       this.simulateMockEvents();

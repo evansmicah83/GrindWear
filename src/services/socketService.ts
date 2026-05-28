@@ -6,7 +6,7 @@ class SocketService {
   private mockMode = true;
   private listeners: Map<string, Set<Function>> = new Map();
 
-  connect(url: string = 'http://localhost:3001') {
+  connect(url: string = import.meta.env.VITE_API_URL || 'http://localhost:3001') {
     if (this.mockMode) {
       return;
     }
@@ -30,7 +30,7 @@ class SocketService {
   joinRoom(userId: string) {
     this.mockMode = false;
     if (!this.socket) {
-      this.socket = io('http://localhost:3001', { autoConnect: true, reconnection: true });
+      this.socket = io(import.meta.env.VITE_API_URL || 'http://localhost:3001', { autoConnect: true, reconnection: true });
       this.socket.on('connect', () => {
         this.socket!.emit('join', userId);
         // re-attach listeners
