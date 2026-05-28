@@ -25,16 +25,22 @@ app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
-// Maintenance mode middleware — blocks all non-admin API requests
-app.use(async (req, res, next) => {
+// Maintenance mode — cached in memory, refreshed every 30s to avoid a DB hit on every request
+let maintenanceMode = false;
+let maintenanceCacheTime = 0;
+async function isMaintenanceMode(): Promise<boolean> {
+  if (Date.now() - maintenanceCacheTime < 30_000) return maintenanceMode;
   try {
-    // Skip for admin routes, auth, and settings
-    if (req.path.startsWith('/api/admin') || req.path.startsWith('/api/auth') || req.path === '/api/settings') return next();
     const setting = await queryOne<any>(`SELECT value FROM settings WHERE key = 'maintenance_mode'`);
-    if (setting?.value === 'true') {
-      return res.status(503).json({ error: 'Store is under maintenance. Please check back later.' });
-    }
-  } catch { /* ignore db errors during maintenance check */ }
+    maintenanceMode = setting?.value === 'true';
+    maintenanceCacheTime = Date.now();
+  } catch { /* keep last known value */ }
+  return maintenanceMode;
+}
+
+app.use(async (req, res, next) => {
+  if (req.path.startsWith('/api/admin') || req.path.startsWith('/api/auth') || req.path === '/api/settings') return next();
+  if (await isMaintenanceMode()) return res.status(503).json({ error: 'Store is under maintenance. Please check back later.' });
   next();
 });
 

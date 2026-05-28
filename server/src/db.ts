@@ -12,7 +12,7 @@ export async function query<T = any>(text: string, params?: any[]): Promise<T[]>
   try {
     const res = await pool.query(text, params);
     const duration = Date.now() - start;
-    if (duration > 1000) console.warn(`[DB] Slow query (${duration}ms):`, text);
+    if (duration > 5000) console.warn(`[DB] Slow query (${duration}ms):`, text);
     return res.rows as T[];
   } catch (err: any) {
     console.error('[DB] Query error:', err.message, '| Query:', text);
