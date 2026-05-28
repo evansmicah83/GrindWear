@@ -28,7 +28,7 @@ export function ChatWidget({ onClose }: Props) {
   useEffect(() => {
     api.getMessages().then(setMessages).catch(() => {});
 
-    socketRef.current = io('http://localhost:3001');
+    socketRef.current = io(import.meta.env.VITE_API_URL || 'http://localhost:3001');
     socketRef.current.emit('join', user?.id);
     socketRef.current.on('chat-message', (msg: Message) => {
       setMessages(prev => [...prev.filter(m => m.id !== msg.id), msg]);
