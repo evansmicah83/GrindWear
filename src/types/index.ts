@@ -8,11 +8,23 @@ export interface User {
   createdAt: string;
 }
 
+export interface ProductVariant {
+  id: string;
+  size: string;
+  color: string;
+  colorHex: string;
+  stock: number;
+  sku: string;
+}
+
 export interface Product {
   id: string;
   name: string;
   slug: string;
   description: string;
+  details?: string;
+  careInstructions?: string;
+  shippingInfo?: string;
   price: number;
   compareAtPrice?: number;
   category: string;
@@ -20,10 +32,12 @@ export interface Product {
   images: string[];
   sizes: string[];
   colors: string[];
+  colorSwatches?: { name: string; hex: string }[];
   tags: string[];
   stock: number;
   featured: boolean;
   trending: boolean;
+  isNew?: boolean;
   rating: number;
   reviewCount: number;
   createdAt: string;
@@ -37,14 +51,40 @@ export interface CartItem {
   quantity: number;
 }
 
+export interface Cart {
+  items: CartItem[];
+  coupon: Coupon | null;
+  subtotal: number;
+  discount: number;
+  shipping: number;
+  total: number;
+}
+
+export interface OrderItem {
+  id: string;
+  productId: string;
+  productName: string;
+  productImage: string;
+  size: string;
+  color: string;
+  quantity: number;
+  price: number;
+}
+
 export interface Order {
   id: string;
+  orderNumber: string;
   userId: string;
-  items: CartItem[];
+  items: OrderItem[];
+  subtotal: number;
+  shipping: number;
+  discount: number;
   total: number;
   status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
   shippingAddress: Address;
+  deliveryMethod: 'standard' | 'express' | 'pickup';
   paymentMethod: string;
+  estimatedDelivery?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -55,8 +95,8 @@ export interface Address {
   phone: string;
   street: string;
   city: string;
-  state: string;
-  zipCode: string;
+  county: string;
+  postalCode: string;
   country: string;
   isDefault: boolean;
 }

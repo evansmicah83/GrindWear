@@ -6,10 +6,8 @@ class SocketService {
   private mockMode = true;
   private listeners: Map<string, Set<Function>> = new Map();
 
-  connect(url: string = 'ws://localhost:3001') {
+  connect(url: string = 'http://localhost:3001') {
     if (this.mockMode) {
-      console.log('[Socket] Mock mode enabled - simulating real-time events');
-      this.simulateMockEvents();
       return;
     }
 
@@ -27,10 +25,22 @@ class SocketService {
     this.socket.on('disconnect', () => {
       console.log('[Socket] Disconnected');
     });
+  }
 
-    this.socket.on('error', (error) => {
-      console.error('[Socket] Error:', error);
-    });
+  joinRoom(userId: string) {
+    this.mockMode = false;
+    if (!this.socket) {
+      this.socket = io('http://localhost:3001', { autoConnect: true, reconnection: true });
+      this.socket.on('connect', () => {
+        this.socket!.emit('join', userId);
+        // re-attach listeners
+        this.listeners.forEach((cbs, event) => {
+          cbs.forEach(cb => this.socket!.on(event, cb as any));
+        });
+      });
+    } else {
+      this.socket.emit('join', userId);
+    }
   }
 
   disconnect() {

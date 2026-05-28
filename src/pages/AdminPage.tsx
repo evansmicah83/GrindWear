@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
-import { Users, Package, ShoppingBag, MessageCircle, Pencil, Trash2, Plus, X, Check } from 'lucide-react';
+import { Users, Package, ShoppingBag, MessageCircle, Pencil, Trash2, Plus, X, Check, Upload } from 'lucide-react';
 import { MainLayout } from '../layouts/MainLayout';
 import { useAuth } from '../contexts/AuthContext';
 import { api } from '../services/api';
-import { formatPrice } from '../../lib/utils';
+import { formatPrice } from '@/lib/utils';
 import { toast } from 'sonner';
 import { ChatWidget } from '../components/ChatWidget';
 
@@ -92,10 +92,11 @@ export function AdminPage() {
             {orders.map(order => (
               <div key={order.id} className="bg-white border border-gray-200 rounded-xl p-4">
                 <div className="flex items-center justify-between flex-wrap gap-3">
-                  <div>
+                  <div className="flex-1 min-w-0">
                     <p className="font-bold text-sm text-gray-900">{order.id}</p>
-                    <p className="text-xs text-gray-500">{new Date(order.createdAt).toLocaleDateString()} · {order.items.length} items · {formatPrice(order.total)}</p>
-                    <p className="text-xs text-gray-500 mt-0.5">User: {order.userId}</p>
+                    <p className="text-xs text-gray-500">{new Date(order.created_at).toLocaleDateString()} · {order.items.length} items · {formatPrice(order.total)}</p>
+                    <p className="text-xs text-gray-500 mt-0.5">User: {order.customer_name || 'N/A'}</p>
+                    <p className="text-xs text-gray-500">Phone: {order.customer_phone || 'N/A'}</p>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className={`text-xs font-semibold px-3 py-1 rounded-full capitalize ${STATUS_COLORS[order.status]}`}>{order.status}</span>
@@ -216,12 +217,15 @@ function ProductFormModal({ product, onClose, onSave }: { product: any; onClose:
     rating: product?.rating || 4.5,
     reviewCount: product?.reviewCount || 0,
   });
+  const [imageFiles, setImageFiles] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
     try {
+      const urlImages = form.images.split(',').map((s: string) => s.trim()).filter(Boolean);
+      const allImages = [...imageFiles, ...urlImages];
       await onSave({
         ...form,
         price: Number(form.price),
@@ -232,7 +236,7 @@ function ProductFormModal({ product, onClose, onSave }: { product: any; onClose:
         sizes: form.sizes.split(',').map((s: string) => s.trim()).filter(Boolean),
         colors: form.colors.split(',').map((s: string) => s.trim()).filter(Boolean),
         tags: form.tags.split(',').map((s: string) => s.trim()).filter(Boolean),
-        images: form.images.split(',').map((s: string) => s.trim()).filter(Boolean),
+        images: allImages,
         slug: form.name.toLowerCase().replace(/\s+/g, '-'),
       });
     } finally {
@@ -250,12 +254,56 @@ function ProductFormModal({ product, onClose, onSave }: { product: any; onClose:
           <button onClick={onClose} className="cursor-pointer hover:opacity-70"><X size={20} /></button>
         </div>
         <form onSubmit={handleSubmit} className="p-5 space-y-3">
-          {[['name', 'Name'], ['description', 'Description'], ['category', 'Category'], ['sizes', 'Sizes (comma separated)'], ['colors', 'Colors (comma separated)'], ['tags', 'Tags (comma separated)'], ['images', 'Image URLs (comma separated)']].map(([key, label]) => (
+          {[['name', 'Name'], ['description', 'Description'], ['category', 'Category'], ['sizes', 'Sizes (comma separated)'], ['colors', 'Colors (comma separated)'], ['tags', 'Tags (comma separated)']].map(([key, label]) => (
             <div key={key}>
               <label className="block text-xs font-semibold text-gray-600 mb-1">{label}</label>
-              <input {...f(key)} required={['name','description','category','images'].includes(key)} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gray-400" />
+              <input value={(form as any)[key]} onChange={(e: any) => setForm(p => ({ ...p, [key]: e.target.value }))} required={['name','description','category'].includes(key)} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gray-400" />
             </div>
           ))}
+          <div>
+            <label className="block text-xs font-semibold text-gray-600 mb-1">Upload Images</label>
+            <label className="w-full flex items-center justify-center gap-2 px-4 py-3 border border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 text-sm font-medium text-gray-600 transition-colors">
+              <Upload size={16} />
+              Choose Images
+              <input 
+                type="file" 
+                multiple
+                accept="image/*"
+                onChange={(e) => {
+                  const files = Array.from(e.target.files || []);
+                  files.forEach(file => {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                      const base64 = event.target?.result as string;
+                      setImageFiles(imgs => [...imgs, base64]);
+                    };
+                    reader.readAsDataURL(file);
+                  });
+                }}
+                className="hidden"
+              />
+            </label>
+            {imageFiles.length > 0 && (
+              <div className="mt-2 flex flex-wrap gap-2">
+                {imageFiles.map((img, i) => (
+                  <div key={i} className="relative">
+                    <img src={img} alt={`uploaded-${i}`} className="w-12 h-12 object-cover rounded" />
+                    <button
+                      type="button"
+                      onClick={() => setImageFiles(imgs => imgs.filter((_, idx) => idx !== i))}
+                      className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-xs hover:bg-red-600"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-gray-600 mb-1">Or Image URLs (comma separated)</label>
+            <input value={form.images} onChange={(e: any) => setForm(p => ({ ...p, images: e.target.value }))} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-gray-400" placeholder="https://... , https://..." />
+          </div>
           <div className="grid grid-cols-2 gap-3">
             {[['price', 'Price (KES)'], ['compareAtPrice', 'Compare Price'], ['stock', 'Stock']].map(([key, label]) => (
               <div key={key}>

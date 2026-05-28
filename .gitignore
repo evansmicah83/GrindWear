@@ -2,6 +2,8 @@ node_modules/
 dist/
 .env
 .env.local
+server/.env
 *.log
 zip_extracted/
 grind_byte-main.zip
+db.json

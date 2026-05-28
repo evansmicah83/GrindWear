@@ -10,6 +10,9 @@ import { LoginPage } from './pages/LoginPage';
 import { CartPage } from './pages/CartPage';
 import { CheckoutPage } from './pages/CheckoutPage';
 import { OrderConfirmationPage } from './pages/OrderConfirmationPage';
+import { OrdersPage } from './pages/OrdersPage';
+import { SettingsPage } from './pages/SettingsPage';
+import { AdminSettingsPage } from './pages/AdminSettingsPage';
 
 export default function App() {
   useEffect(() => {
@@ -29,6 +32,9 @@ export default function App() {
           <Route path="/cart" element={<CartPage />} />
           <Route path="/checkout" element={<CheckoutPage />} />
           <Route path="/order-confirmation" element={<OrderConfirmationPage />} />
+          <Route path="/orders" element={<OrdersPage />} />
+          <Route path="/settings" element={<SettingsPage />} />
+          <Route path="/admin/settings" element={<AdminSettingsPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
         <Toaster position="top-right" richColors closeButton />
@@ -36,3 +42,4 @@ export default function App() {
     </BrowserRouter>
   );
 }
+

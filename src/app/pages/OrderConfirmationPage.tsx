@@ -3,7 +3,7 @@ import { CheckCircle, Package, Truck, Home, MapPin } from 'lucide-react';
 import { MainLayout } from '../layouts/MainLayout';
 import { Button } from '../components/ui/button';
 import { Card } from '../components/ui/card';
-import { formatPrice, formatDate } from '../../lib/utils';
+import { formatPrice, formatDate } from '@/lib/utils';
 import type { Order } from '../types';
 import { backendEmulator } from '../services/backendEmulator';
 

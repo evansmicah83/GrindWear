@@ -1,68 +1,13 @@
 import { Heart, ShoppingCart, Star, CheckCircle2, X, Eye } from 'lucide-react';
 import { useState } from 'react';
-import { useNavigate } from 'react-router';
-import { toast } from 'sonner';
+import { useNavigate, Link } from 'react-router';
+import Swal from 'sweetalert2';
 import type { Product } from '../types';
-import { formatPrice } from '../../lib/utils';
+import { formatPrice, normalizeImageSource } from '@/lib/utils';
+import { ImageWithFallback } from './ImageWithFallback';
 import { Badge } from './ui/badge';
-import { Button } from './ui/button';
 import { useCart } from '../contexts/CartContext';
-
-interface CartToastProps {
-  product: Product;
-  size: string;
-  color: string;
-  toastId: string | number;
-}
-
-function CartToast({ product, size, color, toastId }: CartToastProps) {
-  const navigate = useNavigate();
-
-  return (
-    <div
-      className="flex items-start gap-3 bg-white border border-gray-100 rounded-2xl shadow-2xl p-4 w-[340px] animate-in slide-in-from-right-5 fade-in duration-300"
-      style={{ boxShadow: '0 8px 40px rgba(0,0,0,0.13)' }}
-    >
-      {/* Product image */}
-      <div className="relative shrink-0 w-16 h-16 rounded-xl overflow-hidden bg-gray-100">
-        <img
-          src={product.images[0]}
-          alt={product.name}
-          className="w-full h-full object-cover"
-        />
-        <div className="absolute inset-0 flex items-center justify-center bg-green-500/80 rounded-xl">
-          <CheckCircle2 size={28} className="text-white drop-shadow" />
-        </div>
-      </div>
-
-      {/* Info */}
-      <div className="flex-1 min-w-0">
-        <p className="text-[11px] font-semibold uppercase tracking-widest text-green-600 mb-0.5">Added to cart</p>
-        <p className="font-bold text-gray-900 text-sm leading-tight line-clamp-1">{product.name}</p>
-        <p className="text-xs text-gray-500 mt-0.5">
-          {size} &nbsp;·&nbsp; {color}
-        </p>
-        <p className="text-sm font-bold text-gray-900 mt-1">{formatPrice(product.price)}</p>
-
-        <button
-          onClick={() => { toast.dismiss(toastId); navigate('/cart'); }}
-          className="mt-2 w-full flex items-center justify-center gap-1.5 bg-gray-900 hover:bg-gray-700 text-white text-xs font-semibold py-1.5 rounded-lg transition-colors"
-        >
-          <ShoppingCart size={13} />
-          View Cart
-        </button>
-      </div>
-
-      {/* Dismiss */}
-      <button
-        onClick={() => toast.dismiss(toastId)}
-        className="shrink-0 text-gray-400 hover:text-gray-700 transition-colors mt-0.5"
-      >
-        <X size={16} />
-      </button>
-    </div>
-  );
-}
+import { useWishlistStore } from '../stores/wishlistStore';
 
 interface ProductCardProps {
   product: Product;
@@ -71,50 +16,54 @@ interface ProductCardProps {
 
 export function ProductCard({ product, onClick }: ProductCardProps) {
   const navigate = useNavigate();
-  const [isWishlisted, setIsWishlisted] = useState(false);
-  const [imageLoaded, setImageLoaded] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
   const { addItem } = useCart();
+  const { toggle, isInWishlist } = useWishlistStore();
+  const wishlisted = isInWishlist(product.id);
+  const primaryImage = normalizeImageSource(product.images?.[0]);
 
   const handleAddToCart = async (e: React.MouseEvent) => {
     e.stopPropagation();
     setIsAdding(true);
-
-    await new Promise(resolve => setTimeout(resolve, 300));
-
-    const size = product.sizes[0];
-    const color = product.colors[0];
+    await new Promise(r => setTimeout(r, 300));
+    const size = product.sizes?.[0] ?? '';
+    const color = product.colors?.[0] ?? '';
     addItem(product, size, color, 1);
-
-    toast.custom(
-      (t) => (
-        <CartToast
-          product={product}
-          size={size}
-          color={color}
-          toastId={t}
-        />
-      ),
-      { duration: 4000, position: 'top-right' }
-    );
-
+    Swal.fire({
+      toast: true,
+      position: 'top-end',
+      icon: 'success',
+      title: 'Added to cart!',
+      text: `${product.name} · ${size}`,
+      showConfirmButton: false,
+      timer: 2500,
+      timerProgressBar: true,
+      background: '#111',
+      color: '#fff',
+      iconColor: '#3b82f6',
+      customClass: { popup: 'rounded-xl shadow-2xl' },
+    });
     setIsAdding(false);
   };
 
   const handleWishlist = (e: React.MouseEvent) => {
     e.stopPropagation();
-    const next = !isWishlisted;
-    setIsWishlisted(next);
-    toast(next ? `Added to wishlist` : `Removed from wishlist`, {
-      description: product.name,
-      icon: <Heart size={16} className={next ? 'text-red-500 fill-red-500' : 'text-gray-400'} />,
-      duration: 2000,
+    toggle(product);
+    const next = !wishlisted;
+    Swal.fire({
+      toast: true,
+      position: 'top-end',
+      icon: next ? 'success' : 'info',
+      title: next ? 'Saved to wishlist ❤️' : 'Removed from wishlist',
+      text: product.name,
+      showConfirmButton: false,
+      timer: 2000,
+      timerProgressBar: true,
+      background: '#111',
+      color: '#fff',
+      iconColor: next ? '#ef4444' : '#6b7280',
+      customClass: { popup: 'rounded-xl shadow-2xl' },
     });
-  };
-
-  const handleView = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    navigate(`/products/${product.id}`);
   };
 
   const discount = product.compareAtPrice
@@ -123,112 +72,80 @@ export function ProductCard({ product, onClick }: ProductCardProps) {
 
   return (
     <div
-      className="group bg-white border border-grind-border rounded-lg overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer"
-      onClick={onClick ?? (() => navigate(`/products/${product.id}`))}
+      className="group bg-white border border-grind-border rounded-xl overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer"
+      onClick={onClick ?? (() => navigate(`/products/${product.slug || product.id}`))}
     >
       <div className="relative aspect-square overflow-hidden bg-gray-100">
-        {!imageLoaded && (
-          <div className="absolute inset-0 animate-pulse bg-gray-200" />
-        )}
-        <img
-          src={product.images[0]}
+        <ImageWithFallback
+          src={primaryImage}
           alt={product.name}
-          className={`w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 ${
-            imageLoaded ? 'opacity-100' : 'opacity-0'
-          }`}
-          onLoad={() => setImageLoaded(true)}
+          className="w-full h-full group-hover:scale-110 transition-transform duration-500"
         />
 
         {discount > 0 && (
-          <Badge
-            variant="danger"
-            className="absolute top-3 left-3"
-          >
-            -{discount}%
-          </Badge>
-        )}
-
-        {product.trending && (
-          <Badge
-            variant="info"
-            className="absolute top-3 right-3"
-          >
-            Trending
-          </Badge>
+          <Badge variant="danger" className="absolute top-3 left-3" size="sm">-{discount}%</Badge>
         )}
 
         <button
           onClick={handleWishlist}
-          title={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
           className={`absolute top-3 right-3 p-2 rounded-full backdrop-blur-sm transition-all duration-200 cursor-pointer ${
-            product.trending ? 'top-14' : ''
-          } ${
-            isWishlisted
-              ? 'bg-red-500 text-white'
-              : 'bg-white/80 text-gray-600 hover:bg-white'
+            wishlisted ? 'bg-red-500 text-white' : 'bg-white/80 text-gray-600 hover:bg-white'
           }`}
         >
-          <Heart size={18} fill={isWishlisted ? 'currentColor' : 'none'} />
+          <Heart size={16} fill={wishlisted ? 'currentColor' : 'none'} />
         </button>
 
         <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
           <div className="flex gap-2">
-            <Button
-              size="sm"
-              onClick={handleAddToCart}
-              loading={isAdding}
-              className="flex-1 bg-white text-grind-black hover:bg-white/90 cursor-pointer"
-            >
-              {!isAdding && <ShoppingCart size={15} />}
-              {isAdding ? 'Adding...' : 'Quick Add'}
-            </Button>
             <button
-              onClick={handleView}
-              title="View product"
-              className="p-2 bg-white/90 hover:bg-white text-grind-black rounded-md transition-colors cursor-pointer"
+              onClick={handleAddToCart}
+              disabled={isAdding}
+              className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-white text-grind-black text-xs font-bold rounded-lg hover:bg-white/90 transition-colors disabled:opacity-70 cursor-pointer"
             >
-              <Eye size={15} />
+              {isAdding ? (
+                <svg className="animate-spin h-3.5 w-3.5" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+              ) : <ShoppingCart size={13} />}
+              {isAdding ? 'Adding...' : 'Quick Add'}
             </button>
+            <Link
+              to={`/products/${product.slug || product.id}`}
+              onClick={e => e.stopPropagation()}
+              className="p-2 bg-white/90 hover:bg-white text-grind-black rounded-lg transition-colors cursor-pointer flex items-center"
+            >
+              <Eye size={13} />
+            </Link>
           </div>
         </div>
       </div>
 
       <div className="p-4">
-        <div className="flex items-center gap-1 mb-2">
-          <Star size={14} className="fill-yellow-400 text-yellow-400" />
-          <span className="text-sm font-medium">{product.rating}</span>
-          <span className="text-sm text-gray-500">({product.reviewCount})</span>
+        <div className="flex items-center gap-1 mb-1.5">
+          <Star size={13} className="fill-yellow-400 text-yellow-400" />
+          <span className="text-xs font-semibold">{product.rating}</span>
+          <span className="text-xs text-gray-400">({product.reviewCount})</span>
         </div>
 
-        <h3 className="font-semibold text-grind-black mb-1 line-clamp-2 group-hover:text-grind-blue transition-colors">
+        <h3 className="font-bold text-gray-900 mb-0.5 line-clamp-1 text-sm group-hover:text-grind-blue transition-colors">
           {product.name}
         </h3>
 
-        <p className="text-sm text-gray-600 mb-3 line-clamp-1">
-          {product.category.charAt(0).toUpperCase() + product.category.slice(1)}
-        </p>
+        <p className="text-xs text-gray-500 mb-2 capitalize">{product.category}</p>
 
         <div className="flex items-center gap-2">
-          <span className="text-lg font-bold text-grind-black">
-            {formatPrice(product.price)}
-          </span>
+          <span className="font-black text-gray-900">{formatPrice(product.price)}</span>
           {product.compareAtPrice && (
-            <span className="text-sm text-gray-400 line-through">
-              {formatPrice(product.compareAtPrice)}
-            </span>
+            <span className="text-xs text-gray-400 line-through">{formatPrice(product.compareAtPrice)}</span>
           )}
         </div>
 
         {product.stock < 10 && product.stock > 0 && (
-          <p className="text-xs text-grind-warning mt-2">
-            Only {product.stock} left in stock
-          </p>
+          <p className="text-xs text-orange-500 mt-1.5">Only {product.stock} left</p>
         )}
-
         {product.stock === 0 && (
-          <p className="text-xs text-grind-danger mt-2 font-medium">
-            Out of stock
-          </p>
+          <p className="text-xs text-red-500 mt-1.5 font-medium">Out of stock</p>
         )}
       </div>
     </div>

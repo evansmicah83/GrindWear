@@ -1,12 +1,39 @@
 import { ShoppingCart, X } from 'lucide-react';
 import { useState } from 'react';
+import { useNavigate } from 'react-router';
 import { useCart } from '../contexts/CartContext';
-import { formatPrice } from '../../lib/utils';
+import { useAuth } from '../contexts/AuthContext';
+import { ImageWithFallback } from './ImageWithFallback';
+import { formatPrice } from '@/lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
+import Swal from 'sweetalert2';
 
 export function FloatingCart() {
-  const { items, itemCount, total } = useCart();
+  const { items, itemCount, total, subtotal, discount, shipping, coupon, removeItem } = useCart();
+  const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
   const [isExpanded, setIsExpanded] = useState(false);
+
+  const handleCheckout = () => {
+    if (!isAuthenticated) {
+      Swal.fire({
+        icon: 'info',
+        title: 'Sign in to checkout',
+        html: `<p style="color:#6b7280;font-size:14px">Your cart items are saved. Sign in or create a free account to complete your order.</p>`,
+        showCancelButton: true,
+        confirmButtonText: '🔐 Sign In',
+        cancelButtonText: 'Continue Browsing',
+        confirmButtonColor: '#111827',
+        cancelButtonColor: '#6b7280',
+        customClass: { popup: 'rounded-2xl shadow-2xl font-sans' },
+      }).then(result => {
+        if (result.isConfirmed) navigate('/login', { state: { from: '/checkout' } });
+      });
+      return;
+    }
+    navigate('/checkout');
+    setIsExpanded(false);
+  };
 
   if (itemCount === 0) return null;
 
@@ -61,7 +88,7 @@ export function FloatingCart() {
               <div className="flex-1 overflow-y-auto p-6 space-y-4">
                 {items.map((item) => (
                   <div key={item.id} className="flex gap-3 bg-gray-50 rounded-lg p-3">
-                    <img
+                    <ImageWithFallback
                       src={item.product.images[0]}
                       alt={item.product.name}
                       className="w-20 h-20 object-cover rounded-lg"
@@ -75,26 +102,50 @@ export function FloatingCart() {
                         {formatPrice(item.product.price * item.quantity)}
                       </p>
                     </div>
+                    <button
+                      onClick={() => removeItem(item.id)}
+                      className="self-start p-1 hover:bg-gray-200 rounded transition-colors text-gray-400 hover:text-red-500"
+                    >
+                      <X size={14} />
+                    </button>
                   </div>
                 ))}
               </div>
 
-              <div className="p-6 border-t border-grind-border bg-gray-50">
-                <div className="flex justify-between mb-4">
-                  <span className="font-semibold text-grind-black">Total</span>
-                  <span className="font-bold text-xl text-grind-black">
-                    {formatPrice(total)}
-                  </span>
+              <div className="p-6 border-t border-grind-border bg-gray-50 space-y-3">
+                {/* Fee breakdown */}
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between text-gray-600">
+                    <span>Subtotal ({itemCount} item{itemCount !== 1 ? 's' : ''})</span>
+                    <span>{formatPrice(subtotal)}</span>
+                  </div>
+                  {discount > 0 && (
+                    <div className="flex justify-between text-green-600">
+                      <span>Discount {coupon ? `(${coupon.code})` : ''}</span>
+                      <span>− {formatPrice(discount)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between text-gray-600">
+                    <span>Shipping</span>
+                    <span>{shipping === 0 ? <span className="text-green-600 font-medium">Free</span> : formatPrice(shipping)}</span>
+                  </div>
+                  {shipping > 0 && (
+                    <p className="text-xs text-gray-400">Free shipping on orders over {formatPrice(2500)}</p>
+                  )}
+                  <div className="border-t border-gray-200 pt-2 flex justify-between font-bold text-gray-900">
+                    <span>Total</span>
+                    <span className="text-lg">{formatPrice(total)}</span>
+                  </div>
                 </div>
                 <button
-                  onClick={() => window.location.href = '/checkout'}
+                  onClick={handleCheckout}
                   className="w-full bg-grind-black text-white py-3 rounded-lg font-medium hover:bg-grind-black/90 transition-colors"
                 >
                   Checkout Now
                 </button>
                 <button
-                  onClick={() => window.location.href = '/cart'}
-                  className="w-full border-2 border-grind-border text-grind-black py-3 rounded-lg font-medium hover:bg-gray-100 transition-colors mt-2"
+                  onClick={() => { navigate('/cart'); setIsExpanded(false); }}
+                  className="w-full border-2 border-grind-border text-grind-black py-3 rounded-lg font-medium hover:bg-gray-100 transition-colors"
                 >
                   View Full Cart
                 </button>

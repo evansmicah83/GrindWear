@@ -20,7 +20,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const token = localStorage.getItem('grind-token');
     if (token) {
-      api.me().then(u => setUser(u)).catch(() => localStorage.removeItem('grind-token')).finally(() => setIsLoading(false));
+      api.me()
+        .then(u => setUser(u))
+        .catch((err: any) => {
+          // Only clear token if the server explicitly rejects it (401)
+          // Network errors or 5xx should NOT log the user out
+          if (err?.status === 401) localStorage.removeItem('grind-token');
+        })
+        .finally(() => setIsLoading(false));
     } else {
       setIsLoading(false);
     }
@@ -30,6 +37,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { token, user: u } = await api.login(email, password);
     localStorage.setItem('grind-token', token);
     setUser(u);
+    return { user: u };
   };
 
   const register = async ({ email, password, name }: { email: string; password: string; name: string }) => {

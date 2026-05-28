@@ -55,7 +55,9 @@ export function ChatWidget({ onClose }: Props) {
   };
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 w-80 bg-white rounded-2xl shadow-2xl border border-gray-100 flex flex-col overflow-hidden" style={{ height: '460px' }}>
+    <div className="fixed z-50 flex flex-col overflow-hidden bg-white shadow-2xl border border-gray-100
+      inset-0 rounded-none
+      sm:inset-auto sm:bottom-6 sm:right-6 sm:w-80 sm:rounded-2xl sm:h-[460px]">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 bg-gray-900 text-white">
         <div className="flex items-center gap-2">

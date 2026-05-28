@@ -6,7 +6,7 @@ import { Button } from '../components/ui/button';
 import { Card } from '../components/ui/card';
 import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
-import { formatPrice } from '../../lib/utils';
+import { formatPrice } from '@/lib/utils';
 import { backendEmulator } from '../services/backendEmulator';
 import { toast } from 'sonner';
 import type { Address } from '../types';

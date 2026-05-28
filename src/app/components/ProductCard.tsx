@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { motion } from 'motion/react';
 import type { Product } from '../types';
-import { formatPrice } from '../../lib/utils';
+import { formatPrice } from '@/lib/utils';
 import { useCart } from '../contexts/CartContext';
 
 interface ProductCardProps {

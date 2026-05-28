@@ -2,13 +2,16 @@ import { ReactNode } from 'react';
 import { AuthProvider } from './AuthContext';
 import { CartProvider } from './CartContext';
 import { NotificationsProvider } from './NotificationsContext';
+import { ReviewPromptProvider } from './ReviewPromptContext';
 
 export function AppProvider({ children }: { children: ReactNode }) {
   return (
     <AuthProvider>
       <CartProvider>
         <NotificationsProvider>
-          {children}
+          <ReviewPromptProvider>
+            {children}
+          </ReviewPromptProvider>
         </NotificationsProvider>
       </CartProvider>
     </AuthProvider>

@@ -1,116 +1,51 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import type { CartItem, Product } from '../types';
+import { createContext, useContext, ReactNode } from 'react';
+import { useCartStore } from '../stores/cartStore';
+import type { CartItem, Product, Coupon } from '../types';
 
 interface CartContextType {
   items: CartItem[];
   itemCount: number;
   total: number;
+  subtotal: number;
+  discount: number;
+  shipping: number;
+  coupon: Coupon | null;
   addItem: (product: Product, size: string, color: string, quantity?: number) => void;
   removeItem: (itemId: string) => void;
   updateQuantity: (itemId: string, quantity: number) => void;
   clearCart: () => void;
+  applyCoupon: (coupon: Coupon) => void;
+  removeCoupon: () => void;
   isInCart: (productId: string, size: string, color: string) => boolean;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export function CartProvider({ children }: { children: ReactNode }) {
-  const [items, setItems] = useState<CartItem[]>([]);
+  const store = useCartStore();
 
-  useEffect(() => {
-    const savedCart = localStorage.getItem('grind-byte-cart');
-    if (savedCart) {
-      try {
-        setItems(JSON.parse(savedCart));
-      } catch (error) {
-        console.error('Failed to parse saved cart', error);
-      }
-    }
-  }, []);
-
-  useEffect(() => {
-    localStorage.setItem('grind-byte-cart', JSON.stringify(items));
-  }, [items]);
-
-  const addItem = (product: Product, size: string, color: string, quantity = 1) => {
-    setItems(prevItems => {
-      const existingItem = prevItems.find(
-        item => item.product.id === product.id && item.size === size && item.color === color
-      );
-
-      if (existingItem) {
-        return prevItems.map(item =>
-          item.id === existingItem.id
-            ? { ...item, quantity: item.quantity + quantity }
-            : item
-        );
-      }
-
-      return [
-        ...prevItems,
-        {
-          id: `${product.id}-${size}-${color}-${Date.now()}`,
-          product,
-          size,
-          color,
-          quantity
-        }
-      ];
-    });
+  const value: CartContextType = {
+    items: store.items,
+    coupon: store.coupon,
+    itemCount: store.itemCount(),
+    subtotal: store.subtotal(),
+    discount: store.discount(),
+    shipping: store.shipping(),
+    total: store.total(),
+    addItem: store.addItem,
+    removeItem: store.removeItem,
+    updateQuantity: store.updateQuantity,
+    clearCart: store.clearCart,
+    applyCoupon: store.applyCoupon,
+    removeCoupon: store.removeCoupon,
+    isInCart: store.isInCart,
   };
 
-  const removeItem = (itemId: string) => {
-    setItems(prevItems => prevItems.filter(item => item.id !== itemId));
-  };
-
-  const updateQuantity = (itemId: string, quantity: number) => {
-    if (quantity <= 0) {
-      removeItem(itemId);
-      return;
-    }
-
-    setItems(prevItems =>
-      prevItems.map(item =>
-        item.id === itemId ? { ...item, quantity } : item
-      )
-    );
-  };
-
-  const clearCart = () => {
-    setItems([]);
-  };
-
-  const isInCart = (productId: string, size: string, color: string) => {
-    return items.some(
-      item => item.product.id === productId && item.size === size && item.color === color
-    );
-  };
-
-  const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
-  const total = items.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
-
-  return (
-    <CartContext.Provider
-      value={{
-        items,
-        itemCount,
-        total,
-        addItem,
-        removeItem,
-        updateQuantity,
-        clearCart,
-        isInCart
-      }}
-    >
-      {children}
-    </CartContext.Provider>
-  );
+  return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }
 
 export function useCart() {
-  const context = useContext(CartContext);
-  if (context === undefined) {
-    throw new Error('useCart must be used within a CartProvider');
-  }
-  return context;
+  const ctx = useContext(CartContext);
+  if (!ctx) throw new Error('useCart must be used within CartProvider');
+  return ctx;
 }

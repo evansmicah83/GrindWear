@@ -4,7 +4,7 @@ import { MainLayout } from '../layouts/MainLayout';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { useCart } from '../contexts/CartContext';
-import { formatPrice } from '../../lib/utils';
+import { formatPrice } from '@/lib/utils';
 import { mockApi } from '../services/mockApi';
 import { toast } from 'sonner';
 import type { Coupon } from '../types';

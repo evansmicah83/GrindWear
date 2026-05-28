@@ -210,6 +210,16 @@ export const mockApi = {
     return MOCK_PRODUCTS.filter(p => p.trending);
   },
 
+  async searchProducts(query: string): Promise<Product[]> {
+    await delay(300);
+    const searchLower = query.toLowerCase();
+    return MOCK_PRODUCTS.filter(p =>
+      p.name.toLowerCase().includes(searchLower) ||
+      p.description.toLowerCase().includes(searchLower) ||
+      p.tags.some(tag => tag.toLowerCase().includes(searchLower))
+    );
+  },
+
   async getCategories(): Promise<Category[]> {
     await delay(400);
     return MOCK_CATEGORIES;
