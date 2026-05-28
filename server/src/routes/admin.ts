@@ -322,7 +322,7 @@ router.delete('/newsletter/:id', async (req, res) => {
 // Admin management
 router.get('/admins', async (_req, res) => {
   try {
-    const admins = await query(`SELECT id, name, email, password_hash, created_at FROM users WHERE role = 'admin' ORDER BY created_at ASC`);
+    const admins = await query(`SELECT id, name, email, created_at FROM users WHERE role = 'admin' ORDER BY created_at ASC`);
     res.json({ data: admins });
   } catch (err: any) { res.status(500).json({ error: err.message }); }
 });
@@ -336,7 +336,7 @@ router.post('/admins', async (req, res) => {
     const bcrypt = await import('bcryptjs');
     const hash = await bcrypt.hash(password, 10);
     const admin = await queryOne(
-      `INSERT INTO users (name, email, password_hash, role) VALUES ($1,$2,$3,'admin') RETURNING id, name, email, password_hash, created_at`,
+      `INSERT INTO users (name, email, password_hash, role) VALUES ($1,$2,$3,'admin') RETURNING id, name, email, created_at`,
       [name, email, hash]
     );
     res.json({ data: admin });
@@ -355,14 +355,14 @@ router.put('/admins/:id', async (req: AuthRequest, res: Response) => {
       const bcrypt = await import('bcryptjs');
       const hash = await bcrypt.hash(password, 10);
       const admin = await queryOne(
-        `UPDATE users SET name=COALESCE($1,name), email=COALESCE($2,email), password_hash=$3 WHERE id=$4 AND role='admin' RETURNING id, name, email, password_hash, created_at`,
+        `UPDATE users SET name=COALESCE($1,name), email=COALESCE($2,email), password_hash=$3 WHERE id=$4 AND role='admin' RETURNING id, name, email, created_at`,
         [name || null, email || null, hash, req.params.id]
       );
       if (!admin) return res.status(404).json({ error: 'Admin not found' });
       return res.json({ data: admin });
     }
     const admin = await queryOne(
-      `UPDATE users SET name=COALESCE($1,name), email=COALESCE($2,email) WHERE id=$3 AND role='admin' RETURNING id, name, email, password_hash, created_at`,
+      `UPDATE users SET name=COALESCE($1,name), email=COALESCE($2,email) WHERE id=$3 AND role='admin' RETURNING id, name, email, created_at`,
       [name || null, email || null, req.params.id]
     );
     if (!admin) return res.status(404).json({ error: 'Admin not found' });
