@@ -76,9 +76,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = async (email: string, password: string) => {
-    const { data, error } = await supabase.auth.signInWithPassword({ 
-      email: email.trim(), 
-      password 
+    // Force Supabase auth initialization to surface detailed auth errors
+    // eslint-disable-next-line no-console
+    console.log('[AuthContext] attempting login for:', email?.trim());
+
+    const { data: sessionData, error: sessionErr } = await supabase.auth.getSession();
+    // eslint-disable-next-line no-console
+    console.log('[AuthContext] current session error:', sessionErr);
+    // eslint-disable-next-line no-console
+    console.log('[AuthContext] current session data:', sessionData);
+
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: email.trim(),
+      password
     });
     
     if (error) {
