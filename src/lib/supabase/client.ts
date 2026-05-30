@@ -9,10 +9,16 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
   console.error('[Supabase] Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY. Check .env.local');
 }
 
-export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-  auth: {
-    storage: localStorage,
-    persistSession: true,
-    autoRefreshToken: true,
-  },
-});
+// Create the client only when env vars exist.
+// On some deployments (e.g. Vercel) VITE_* may not be injected unless configured,
+// so we guard to prevent runtime crashes.
+export const supabase = SUPABASE_URL && SUPABASE_ANON_KEY
+  ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: {
+        storage: localStorage,
+        persistSession: true,
+        autoRefreshToken: true,
+      },
+    })
+  : null as any;
+
