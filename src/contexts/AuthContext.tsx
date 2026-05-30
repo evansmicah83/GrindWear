@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import type { User } from '../types';
-import { supabase } from '../lib/supabase/client';
+import { supabase, isSupabaseConfigured } from '../lib/supabase/client';
 
 interface AuthContextType {
   user: User | null;
@@ -31,6 +31,10 @@ function mapUser(sbUser: any, profile: any): User {
  * Does NOT throw errors - just returns null on failure.
  */
 async function fetchProfileSafely(userId: string) {
+  if (!isSupabaseConfigured || !supabase) {
+    return null;
+  }
+  
   try {
     const { data, error } = await supabase
       .from('users')
@@ -64,6 +68,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   useEffect(() => {
+    // Guard against null supabase client when env vars are missing
+    if (!isSupabaseConfigured || !supabase) {
+      // eslint-disable-next-line no-console
+      console.warn('[AuthProvider] Supabase client not configured. User authentication will be disabled.');
+      setIsLoading(false);
+      return;
+    }
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       loadUser(session?.user ?? null).finally(() => setIsLoading(false));
     });
@@ -72,15 +84,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       loadUser(session?.user ?? null);
     });
 
-    return () => subscription.unsubscribe();
+    return () => subscription?.unsubscribe();
   }, []);
 
   const login = async (email: string, password: string) => {
     // eslint-disable-next-line no-console
     console.log('[AuthContext] attempting login for:', email?.trim());
 
-    if (!supabase) {
-      throw new Error('Supabase is not configured (missing VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY).');
+    if (!isSupabaseConfigured || !supabase) {
+      throw new Error('Supabase is not configured (missing VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY). Check your environment variables.');
     }
 
     const { data: sessionData, error: sessionErr } = await supabase.auth.getSession();
@@ -121,6 +133,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const register = async ({ email, password, name }: { email: string; password: string; name: string }) => {
+    if (!isSupabaseConfigured || !supabase) {
+      throw new Error('Supabase is not configured (missing VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY). Check your environment variables.');
+    }
+    
     const { data, error } = await supabase.auth.signUp({ 
       email: email.trim(), 
       password, 
@@ -150,6 +166,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = async () => {
+    if (!isSupabaseConfigured || !supabase) {
+      throw new Error('Supabase is not configured (missing VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY).');
+    }
     await supabase.auth.signOut();
     setUser(null);
   };

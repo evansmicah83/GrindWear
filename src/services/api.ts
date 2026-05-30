@@ -1,20 +1,30 @@
-import { supabase } from '../lib/supabase/client';
+import { supabase, isSupabaseConfigured } from '../lib/supabase/client';
+
+// Helper to ensure supabase is configured
+function ensureSupabase() {
+  if (!isSupabaseConfigured || !supabase) {
+    throw Object.assign(new Error('Service unavailable: Supabase not configured'), { status: 503 });
+  }
+}
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
 export const api = {
   login: async (email: string, password: string) => {
+    ensureSupabase();
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw Object.assign(new Error(error.message), { status: 401 });
     return { token: data.session?.access_token, user: data.user };
   },
 
   register: async (email: string, password: string, name: string) => {
+    ensureSupabase();
     const { data, error } = await supabase.auth.signUp({ email, password, options: { data: { name } } });
     if (error) throw Object.assign(new Error(error.message), { status: 409 });
     return { token: data.session?.access_token, user: data.user };
   },
 
   me: async () => {
+    ensureSupabase();
     const { data: { user }, error } = await supabase.auth.getUser();
     if (error || !user) throw Object.assign(new Error('Unauthorized'), { status: 401 });
     const { data: profile } = await supabase.from('users').select('id,name,email,role,phone,avatar_url').eq('id', user.id).single();
@@ -23,6 +33,7 @@ export const api = {
 
   // ── Products ───────────────────────────────────────────────────────────────
   getProducts: async (params?: Record<string, string>) => {
+    ensureSupabase();
     const page = Math.max(1, parseInt(params?.page || '1'));
     const limit = Math.min(100, parseInt(params?.limit || '12'));
     const from = (page - 1) * limit;
@@ -49,6 +60,7 @@ export const api = {
   },
 
   getProduct: async (slug: string) => {
+    ensureSupabase();
     const { data, error } = await supabase.from('products').select(`
       id,name,slug,description,short_description,price,compare_price,sku,is_active,is_featured,is_new,tags,created_at,
       categories(name,slug),
@@ -60,6 +72,7 @@ export const api = {
   },
 
   getCategories: async () => {
+    ensureSupabase();
     const { data, error } = await supabase.from('categories').select('*, products(count)').eq('is_active', true).order('sort_order');
     if (error) throw new Error(error.message);
     return { data: data || [] };
@@ -67,6 +80,7 @@ export const api = {
 
   // ── Orders ─────────────────────────────────────────────────────────────────
   createOrder: async (body: any) => {
+    ensureSupabase();
     const { data: { user } } = await supabase.auth.getUser();
     const { items, subtotal, shipping_cost = 0, discount_amount = 0, total, shippingAddress, paymentMethod } = body;
 
@@ -99,6 +113,7 @@ export const api = {
   },
 
   getMyOrders: async () => {
+    ensureSupabase();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw Object.assign(new Error('Unauthorized'), { status: 401 });
     const { data, error } = await supabase.from('orders').select('*, order_items(*)').eq('user_id', user.id).order('created_at', { ascending: false });
@@ -107,6 +122,7 @@ export const api = {
   },
 
   getOrder: async (id: string) => {
+    ensureSupabase();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw Object.assign(new Error('Unauthorized'), { status: 401 });
     const { data, error } = await supabase.from('orders').select('*, order_items(*)').or(`id.eq.${id},order_number.eq.${id}`).single();
@@ -115,6 +131,7 @@ export const api = {
   },
 
   cancelOrder: async (id: string) => {
+    ensureSupabase();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw Object.assign(new Error('Unauthorized'), { status: 401 });
     const { data, error } = await supabase.from('orders').update({ status: 'cancelled' }).or(`id.eq.${id},order_number.eq.${id}`).eq('user_id', user.id).select().single();
@@ -124,6 +141,7 @@ export const api = {
 
   // ── Users ──────────────────────────────────────────────────────────────────
   getProfile: async () => {
+    ensureSupabase();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw Object.assign(new Error('Unauthorized'), { status: 401 });
     const { data } = await supabase.from('users').select('id,name,email,role,phone,avatar_url,created_at').eq('id', user.id).single();
@@ -131,6 +149,7 @@ export const api = {
   },
 
   updateProfile: async (body: any) => {
+    ensureSupabase();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw Object.assign(new Error('Unauthorized'), { status: 401 });
     const { data } = await supabase.from('users').update({ ...body, updated_at: new Date().toISOString() }).eq('id', user.id).select('id,name,email,phone,avatar_url,role').single();
@@ -138,6 +157,7 @@ export const api = {
   },
 
   getAddresses: async () => {
+    ensureSupabase();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw Object.assign(new Error('Unauthorized'), { status: 401 });
     const { data } = await supabase.from('addresses').select('*').eq('user_id', user.id).order('is_default', { ascending: false });
@@ -145,6 +165,7 @@ export const api = {
   },
 
   addAddress: async (body: any) => {
+    ensureSupabase();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw Object.assign(new Error('Unauthorized'), { status: 401 });
     if (body.is_default) await supabase.from('addresses').update({ is_default: false }).eq('user_id', user.id);
@@ -153,6 +174,7 @@ export const api = {
   },
 
   updateAddress: async (id: string, body: any) => {
+    ensureSupabase();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw Object.assign(new Error('Unauthorized'), { status: 401 });
     if (body.is_default) await supabase.from('addresses').update({ is_default: false }).eq('user_id', user.id);
@@ -161,6 +183,7 @@ export const api = {
   },
 
   deleteAddress: async (id: string) => {
+    ensureSupabase();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw Object.assign(new Error('Unauthorized'), { status: 401 });
     await supabase.from('addresses').delete().eq('id', id).eq('user_id', user.id);
@@ -168,6 +191,7 @@ export const api = {
   },
 
   getWishlist: async () => {
+    ensureSupabase();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw Object.assign(new Error('Unauthorized'), { status: 401 });
     const { data } = await supabase.from('wishlists').select('*, products(name,slug,price,compare_price,product_images(url,is_primary))').eq('user_id', user.id).order('created_at', { ascending: false });
@@ -175,6 +199,7 @@ export const api = {
   },
 
   addToWishlist: async (product_id: string) => {
+    ensureSupabase();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw Object.assign(new Error('Unauthorized'), { status: 401 });
     const { data } = await supabase.from('wishlists').insert({ user_id: user.id, product_id }).select().single();
@@ -182,6 +207,7 @@ export const api = {
   },
 
   removeFromWishlist: async (productId: string) => {
+    ensureSupabase();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw Object.assign(new Error('Unauthorized'), { status: 401 });
     await supabase.from('wishlists').delete().eq('user_id', user.id).eq('product_id', productId);
@@ -190,6 +216,7 @@ export const api = {
 
   // ── Reviews ────────────────────────────────────────────────────────────────
   getReviews: async (productId: string) => {
+    ensureSupabase();
     const { data } = await supabase.from('reviews').select('id,rating,title,body,anonymous,created_at,users(name,avatar_url)').eq('product_id', productId).eq('is_approved', true).order('created_at', { ascending: false });
     const mapped = (data || []).map((r: any) => ({
       ...r, user_name: r.anonymous ? 'Anonymous' : r.users?.name, avatar_url: r.anonymous ? null : r.users?.avatar_url, users: undefined
@@ -198,6 +225,7 @@ export const api = {
   },
 
   checkReviewed: async (productId: string) => {
+    ensureSupabase();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { reviewed: false };
     const { data } = await supabase.from('reviews').select('id').eq('product_id', productId).eq('user_id', user.id).single();
@@ -205,6 +233,7 @@ export const api = {
   },
 
   addReview: async (body: any) => {
+    ensureSupabase();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw Object.assign(new Error('Unauthorized'), { status: 401 });
     const { data, error } = await supabase.from('reviews').insert({ ...body, user_id: user.id }).select().single();
@@ -214,12 +243,14 @@ export const api = {
 
   // ── Misc ───────────────────────────────────────────────────────────────────
   subscribe: async (email: string) => {
+    ensureSupabase();
     const { error } = await supabase.from('newsletters').insert({ email });
     if (error) throw new Error(error.message);
     return { data: { success: true } };
   },
 
   validateCoupon: async (code: string, cart_total: number) => {
+    ensureSupabase();
     const { data: coupon, error } = await supabase.from('coupons').select('*').eq('code', code.toUpperCase()).eq('is_active', true).single();
     if (error || !coupon) throw Object.assign(new Error('Invalid or expired coupon'), { status: 404 });
     let discount = coupon.type === 'percentage' ? (cart_total * coupon.value) / 100 : coupon.value;
@@ -228,6 +259,7 @@ export const api = {
   },
 
   getSettings: async () => {
+    ensureSupabase();
     const { data } = await supabase.from('settings').select('key,value');
     const map: Record<string, string> = {};
     (data || []).forEach((r: any) => { map[r.key] = r.value; });
@@ -235,6 +267,7 @@ export const api = {
   },
 
   saveSettings: async (body: Record<string, string>) => {
+    ensureSupabase();
     for (const [key, value] of Object.entries(body)) {
       await supabase.from('settings').upsert({ key, value }, { onConflict: 'key' });
     }
@@ -243,6 +276,7 @@ export const api = {
 
   // ── Notifications ──────────────────────────────────────────────────────────
   getNotifications: async () => {
+    ensureSupabase();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw Object.assign(new Error('Unauthorized'), { status: 401 });
     const { data } = await supabase.from('notifications').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(50);
@@ -250,6 +284,7 @@ export const api = {
   },
 
   markNotificationRead: async (id: string) => {
+    ensureSupabase();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw Object.assign(new Error('Unauthorized'), { status: 401 });
     await supabase.from('notifications').update({ read: true }).eq('id', id).eq('user_id', user.id);
@@ -257,6 +292,7 @@ export const api = {
   },
 
   markAllNotificationsRead: async () => {
+    ensureSupabase();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw Object.assign(new Error('Unauthorized'), { status: 401 });
     await supabase.from('notifications').update({ read: true }).eq('user_id', user.id);
@@ -264,6 +300,7 @@ export const api = {
   },
 
   deleteNotification: async (id: string) => {
+    ensureSupabase();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw Object.assign(new Error('Unauthorized'), { status: 401 });
     await supabase.from('notifications').delete().eq('id', id).eq('user_id', user.id);
@@ -271,6 +308,7 @@ export const api = {
   },
 
   clearNotifications: async () => {
+    ensureSupabase();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw Object.assign(new Error('Unauthorized'), { status: 401 });
     await supabase.from('notifications').delete().eq('user_id', user.id);
@@ -279,6 +317,7 @@ export const api = {
 
   // ── Admin ──────────────────────────────────────────────────────────────────
   adminDashboard: async () => {
+    ensureSupabase();
     const [{ data: rev }, { count: orders }, { count: customers }, { data: lowStock }, { data: recentOrders }] = await Promise.all([
       supabase.from('orders').select('total').eq('payment_status', 'paid'),
       supabase.from('orders').select('*', { count: 'exact', head: true }),
@@ -291,11 +330,13 @@ export const api = {
   },
 
   adminGetUsers: async () => {
+    ensureSupabase();
     const { data } = await supabase.from('users').select('id,name,email,role,phone,avatar_url,created_at,orders(total)').order('created_at', { ascending: false });
     return { data: data || [] };
   },
 
   adminGetOrders: async (params?: Record<string, string>) => {
+    ensureSupabase();
     const page = parseInt(params?.page || '1');
     const limit = parseInt(params?.limit || '20');
     let q = supabase.from('orders').select('*,users(name,email,phone),addresses(*),order_items(*)', { count: 'exact' }).order('created_at', { ascending: false }).range((page - 1) * limit, page * limit - 1);
@@ -305,16 +346,19 @@ export const api = {
   },
 
   adminUpdateOrder: async (id: string, body: any) => {
+    ensureSupabase();
     const { data } = await supabase.from('orders').update({ ...body, updated_at: new Date().toISOString() }).eq('id', id).select().single();
     return { data };
   },
 
   adminGetProducts: async () => {
+    ensureSupabase();
     const { data } = await supabase.from('products').select('*,categories(name),product_variants(stock_qty),product_images(*)').order('created_at', { ascending: false });
     return { data: data || [] };
   },
 
   adminCreateProduct: async (body: any) => {
+    ensureSupabase();
     const { name, description, short_description, price, compare_price, sku, category_id, is_featured, is_new, tags, variants = [], images = [] } = body;
     let slug = body.slug?.trim() || name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
     const { data: product } = await supabase.from('products').insert({ name, slug, description, short_description, price, compare_price: compare_price || null, sku: sku?.trim() || null, category_id, is_featured: is_featured || false, is_new: is_new || false, tags: tags || [] }).select().single();
@@ -324,6 +368,7 @@ export const api = {
   },
 
   adminUpdateProduct: async (id: string, body: any) => {
+    ensureSupabase();
     const { images, ...fields } = body;
     const { data: product } = await supabase.from('products').update({ ...fields, updated_at: new Date().toISOString() }).eq('id', id).select().single();
     if (Array.isArray(images)) {
@@ -337,16 +382,19 @@ export const api = {
   },
 
   adminDeleteProduct: async (id: string) => {
+    ensureSupabase();
     await supabase.from('products').update({ is_active: false }).eq('id', id);
     return { data: { success: true } };
   },
 
   adminGetCategories: async () => {
+    ensureSupabase();
     const { data } = await supabase.from('categories').select('*,products(count)').order('sort_order');
     return { data: data || [] };
   },
 
   adminCreateCategory: async (body: any) => {
+    ensureSupabase();
     const { name, description, image_url } = body;
     const slug = name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-');
     const { data } = await supabase.from('categories').insert({ name: name.trim(), slug, description: description || null, image_url: image_url || null }).select().single();
@@ -354,66 +402,79 @@ export const api = {
   },
 
   adminUpdateCategory: async (id: string, body: any) => {
+    ensureSupabase();
     const { data } = await supabase.from('categories').update(body).eq('id', id).select().single();
     return { data };
   },
 
   adminDeleteCategory: async (id: string) => {
+    ensureSupabase();
     await supabase.from('categories').delete().eq('id', id);
     return { data: { success: true } };
   },
 
   adminGetInventory: async () => {
+    ensureSupabase();
     const { data } = await supabase.from('product_variants').select('*,products(id,name,slug,sku,categories(name),product_images(url,is_primary))').order('stock_qty');
     return { data: data || [] };
   },
 
   adminUpdateStock: async (variantId: string, stock_qty: number) => {
+    ensureSupabase();
     const { data } = await supabase.from('product_variants').update({ stock_qty }).eq('id', variantId).select().single();
     return { data };
   },
 
   adminGetCoupons: async () => {
+    ensureSupabase();
     const { data } = await supabase.from('coupons').select('*').order('created_at', { ascending: false });
     return { data: data || [] };
   },
 
   adminCreateCoupon: async (body: any) => {
+    ensureSupabase();
     const { data } = await supabase.from('coupons').insert({ ...body, code: body.code.toUpperCase() }).select().single();
     return { data };
   },
 
   adminGetReviews: async () => {
+    ensureSupabase();
     const { data } = await supabase.from('reviews').select('*,users(name,email,avatar_url),products(name,slug,product_images(url,is_primary))').order('created_at', { ascending: false });
     return { data: data || [] };
   },
 
   adminUpdateReview: async (id: string, body: any) => {
+    ensureSupabase();
     const { data } = await supabase.from('reviews').update(body).eq('id', id).select().single();
     return { data };
   },
 
   adminDeleteReview: async (id: string) => {
+    ensureSupabase();
     await supabase.from('reviews').delete().eq('id', id);
     return { data: { success: true } };
   },
 
   adminGetNewsletter: async () => {
+    ensureSupabase();
     const { data } = await supabase.from('newsletters').select('*').order('created_at', { ascending: false });
     return { data: data || [] };
   },
 
   adminToggleSubscriber: async (id: string, is_active: boolean) => {
+    ensureSupabase();
     const { data } = await supabase.from('newsletters').update({ is_active }).eq('id', id).select().single();
     return { data };
   },
 
   adminDeleteSubscriber: async (id: string) => {
+    ensureSupabase();
     await supabase.from('newsletters').delete().eq('id', id);
     return { data: { success: true } };
   },
 
   adminGetAdmins: async () => {
+    ensureSupabase();
     const { data } = await supabase.from('users').select('id,name,email,created_at').eq('role', 'admin').order('created_at');
     return { data: data || [] };
   },
