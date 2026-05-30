@@ -76,9 +76,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = async (email: string, password: string) => {
-    // Force Supabase auth initialization to surface detailed auth errors
     // eslint-disable-next-line no-console
     console.log('[AuthContext] attempting login for:', email?.trim());
+
+    if (!supabase) {
+      throw new Error('Supabase is not configured (missing VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY).');
+    }
 
     const { data: sessionData, error: sessionErr } = await supabase.auth.getSession();
     // eslint-disable-next-line no-console
