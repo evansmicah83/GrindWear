@@ -1,125 +1,420 @@
-const BASE = (import.meta.env.VITE_API_URL || '') + '/api';
+import { supabase } from '../lib/supabase/client';
 
-function getToken() {
-  return localStorage.getItem('grind-token');
-}
-
-function headers(auth = false) {
-  const h: Record<string, string> = { 'Content-Type': 'application/json' };
-  if (auth) {
-    const t = getToken();
-    if (t) h['Authorization'] = `Bearer ${t}`;
-  }
-  return h;
-}
-
-async function req<T>(path: string, options: RequestInit = {}, auth = false): Promise<T> {
-  const res = await fetch(`${BASE}${path}`, { ...options, headers: headers(auth) });
-  const data = await res.json();
-  if (!res.ok) {
-    // Only throw auth errors as a special type so callers can distinguish
-    const err: any = new Error(data.error || 'Request failed');
-    err.status = res.status;
-    throw err;
-  }
-  return data as T;
-}
-
+// ── Auth ──────────────────────────────────────────────────────────────────────
 export const api = {
-  // Auth
-  login: (email: string, password: string) =>
-    req<{ token: string; user: any }>('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) }),
-  register: (email: string, password: string, name: string) =>
-    req<{ token: string; user: any }>('/auth/register', { method: 'POST', body: JSON.stringify({ email, password, name }) }),
-  me: () => req<any>('/auth/me', {}, true),
-
-  // Products
-  getProducts: (params?: Record<string, string>) => {
-    const qs = params ? '?' + new URLSearchParams(params).toString() : '';
-    return req<{ data: any[]; pagination: any }>(`/products${qs}`);
+  login: async (email: string, password: string) => {
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) throw Object.assign(new Error(error.message), { status: 401 });
+    return { token: data.session?.access_token, user: data.user };
   },
-  getProduct: (slug: string) => req<{ data: any }>(`/products/${slug}`),
-  getCategories: () => req<{ data: any[] }>('/products/categories'),
 
-  // Orders
-  createOrder: (data: any) => req<{ data: any }>('/orders', { method: 'POST', body: JSON.stringify(data) }, true),
-  getMyOrders: () => req<{ data: any[] }>('/orders/my', {}, true),
-  getOrder: (id: string) => req<{ data: any }>(`/orders/${id}`, {}, true),
-  cancelOrder: (id: string) => req<{ data: any }>(`/orders/${id}/cancel`, { method: 'PATCH' }, true),
-
-  // Users
-  getProfile: () => req<{ data: any }>('/users/profile', {}, true),
-  updateProfile: (data: any) => req<{ data: any }>('/users/profile', { method: 'PUT', body: JSON.stringify(data) }, true),
-  getAddresses: () => req<{ data: any[] }>('/users/addresses', {}, true),
-  addAddress: (data: any) => req<{ data: any }>('/users/addresses', { method: 'POST', body: JSON.stringify(data) }, true),
-  updateAddress: (id: string, data: any) => req<{ data: any }>(`/users/addresses/${id}`, { method: 'PUT', body: JSON.stringify(data) }, true),
-  deleteAddress: (id: string) => req<{ data: any }>(`/users/addresses/${id}`, { method: 'DELETE' }, true),
-  getWishlist: () => req<{ data: any[] }>('/users/wishlist', {}, true),
-  addToWishlist: (product_id: string) => req<{ data: any }>('/users/wishlist', { method: 'POST', body: JSON.stringify({ product_id }) }, true),
-  removeFromWishlist: (productId: string) => req<{ data: any }>(`/users/wishlist/${productId}`, { method: 'DELETE' }, true),
-
-  // Reviews
-  getReviews: (productId: string) => req<{ data: any[] }>(`/reviews/${productId}`),
-  checkReviewed: (productId: string) => req<{ reviewed: boolean }>(`/reviews/${productId}/mine`, {}, true),
-  addReview: (data: any) => req<{ data: any }>('/reviews', { method: 'POST', body: JSON.stringify(data) }, true),
-
-  // Newsletter
-  subscribe: (email: string) => req<{ data: any }>('/newsletter', { method: 'POST', body: JSON.stringify({ email }) }),
-
-  // Coupons
-  validateCoupon: (code: string, cart_total: number) =>
-    req<{ data: { coupon: any; discount: number } }>('/coupons/validate', { method: 'POST', body: JSON.stringify({ code, cart_total }) }),
-
-  // Chat
-  getMessages: () => req<any[]>('/chat/messages', {}, true),
-  sendMessage: (content: string) => req<any>('/chat/messages', { method: 'POST', body: JSON.stringify({ content }) }, true),
-
-  // Admin
-  adminDashboard: () => req<{ data: any }>('/admin/dashboard', {}, true),
-  adminGetUsers: () => req<{ data: any[] }>('/admin/users', {}, true),
-  adminGetOrders: (params?: Record<string, string>) => {
-    const qs = params ? '?' + new URLSearchParams(params).toString() : '';
-    return req<{ data: any[] }>(`/admin/orders${qs}`, {}, true);
+  register: async (email: string, password: string, name: string) => {
+    const { data, error } = await supabase.auth.signUp({ email, password, options: { data: { name } } });
+    if (error) throw Object.assign(new Error(error.message), { status: 409 });
+    return { token: data.session?.access_token, user: data.user };
   },
-  adminUpdateOrder: (id: string, data: any) => req<{ data: any }>(`/admin/orders/${id}`, { method: 'PUT', body: JSON.stringify(data) }, true),
-  adminGetProducts: () => req<{ data: any[] }>('/admin/products', {}, true),
-  adminCreateProduct: (data: any) => req<{ data: any }>('/admin/products', { method: 'POST', body: JSON.stringify(data) }, true),
-  adminUpdateProduct: (id: string, data: any) => req<{ data: any }>(`/admin/products/${id}`, { method: 'PUT', body: JSON.stringify(data) }, true),
-  adminDeleteProduct: (id: string) => req<{ data: any }>(`/admin/products/${id}`, { method: 'DELETE' }, true),
-  adminGetCoupons: () => req<{ data: any[] }>('/admin/coupons', {}, true),
-  adminCreateCoupon: (data: any) => req<{ data: any }>('/admin/coupons', { method: 'POST', body: JSON.stringify(data) }, true),
-  adminGetReviews: () => req<{ data: any[] }>('/admin/reviews', {}, true),
-  adminUpdateReview: (id: string, data: any) => req<{ data: any }>(`/admin/reviews/${id}`, { method: 'PATCH', body: JSON.stringify(data) }, true),
-  adminDeleteReview: (id: string) => req<{ data: any }>(`/admin/reviews/${id}`, { method: 'DELETE' }, true),
 
-  // Admin Categories
-  adminGetCategories: () => req<{ data: any[] }>('/admin/categories', {}, true),
-  adminCreateCategory: (data: any) => req<{ data: any }>('/admin/categories', { method: 'POST', body: JSON.stringify(data) }, true),
-  adminUpdateCategory: (id: string, data: any) => req<{ data: any }>(`/admin/categories/${id}`, { method: 'PUT', body: JSON.stringify(data) }, true),
-  adminDeleteCategory: (id: string) => req<{ data: any }>(`/admin/categories/${id}`, { method: 'DELETE' }, true),
+  me: async () => {
+    const { data: { user }, error } = await supabase.auth.getUser();
+    if (error || !user) throw Object.assign(new Error('Unauthorized'), { status: 401 });
+    const { data: profile } = await supabase.from('users').select('id,name,email,role,phone,avatar_url').eq('id', user.id).single();
+    return profile;
+  },
 
-  // Admin Inventory
-  adminGetInventory: () => req<{ data: any[] }>('/admin/inventory', {}, true),
-  adminUpdateStock: (variantId: string, stock_qty: number) => req<{ data: any }>(`/admin/inventory/${variantId}`, { method: 'PATCH', body: JSON.stringify({ stock_qty }) }, true),
+  // ── Products ───────────────────────────────────────────────────────────────
+  getProducts: async (params?: Record<string, string>) => {
+    const page = Math.max(1, parseInt(params?.page || '1'));
+    const limit = Math.min(100, parseInt(params?.limit || '12'));
+    const from = (page - 1) * limit;
 
-  // Admin Newsletter
-  adminGetNewsletter: () => req<{ data: any[] }>('/admin/newsletter', {}, true),
-  adminToggleSubscriber: (id: string, is_active: boolean) => req<{ data: any }>(`/admin/newsletter/${id}`, { method: 'PATCH', body: JSON.stringify({ is_active }) }, true),
-  adminDeleteSubscriber: (id: string) => req<{ data: any }>(`/admin/newsletter/${id}`, { method: 'DELETE' }, true),
+    let q = supabase.from('products').select(`
+      id,name,slug,description,short_description,price,compare_price,sku,is_active,is_featured,is_new,tags,created_at,
+      categories(name,slug),
+      product_images(id,url,alt_text,is_primary,sort_order),
+      product_variants(id,size,color,color_hex,stock_qty,sku_variant),
+      reviews(rating)
+    `, { count: 'exact' }).eq('is_active', true).range(from, from + limit - 1);
 
-  // Admin management
-  adminGetAdmins: () => req<{ data: any[] }>('/admin/admins', {}, true),
-  adminCreateAdmin: (data: any) => req<{ data: any }>('/admin/admins', { method: 'POST', body: JSON.stringify(data) }, true),
-  adminUpdateAdmin: (id: string, data: any) => req<{ data: any }>(`/admin/admins/${id}`, { method: 'PUT', body: JSON.stringify(data) }, true),
+    if (params?.category) q = q.eq('categories.slug', params.category);
+    if (params?.featured === 'true') q = q.eq('is_featured', true);
+    if (params?.trending === 'true') q = q.eq('is_new', true);
+    if (params?.search) q = q.or(`name.ilike.%${params.search}%,description.ilike.%${params.search}%`);
+    if (params?.sort === 'price-asc') q = q.order('price', { ascending: true });
+    else if (params?.sort === 'price-desc') q = q.order('price', { ascending: false });
+    else q = q.order('created_at', { ascending: false });
 
-  // Settings
-  getSettings: () => req<{ data: Record<string, string> }>('/settings'),
-  saveSettings: (data: Record<string, string>) => req<{ data: any }>('/settings', { method: 'PUT', body: JSON.stringify(data) }, true),
+    const { data, count, error } = await q;
+    if (error) throw new Error(error.message);
+    return { data: data || [], pagination: { page, limit, total: count || 0 } };
+  },
 
-  // Notifications
-  getNotifications: () => req<{ data: any[] }>('/notifications', {}, true),
-  markNotificationRead: (id: string) => req<{ data: any }>(`/notifications/${id}/read`, { method: 'PATCH' }, true),
-  markAllNotificationsRead: () => req<{ data: any }>('/notifications/read-all', { method: 'PATCH' }, true),
-  deleteNotification: (id: string) => req<{ data: any }>(`/notifications/${id}`, { method: 'DELETE' }, true),
-  clearNotifications: () => req<{ data: any }>('/notifications', { method: 'DELETE' }, true),
+  getProduct: async (slug: string) => {
+    const { data, error } = await supabase.from('products').select(`
+      id,name,slug,description,short_description,price,compare_price,sku,is_active,is_featured,is_new,tags,created_at,
+      categories(name,slug),
+      product_images(id,url,alt_text,is_primary,sort_order),
+      product_variants(id,size,color,color_hex,stock_qty,sku_variant)
+    `).or(`slug.eq.${slug},id.eq.${slug}`).eq('is_active', true).single();
+    if (error) throw Object.assign(new Error('Product not found'), { status: 404 });
+    return { data };
+  },
+
+  getCategories: async () => {
+    const { data, error } = await supabase.from('categories').select('*, products(count)').eq('is_active', true).order('sort_order');
+    if (error) throw new Error(error.message);
+    return { data: data || [] };
+  },
+
+  // ── Orders ─────────────────────────────────────────────────────────────────
+  createOrder: async (body: any) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    const { items, subtotal, shipping_cost = 0, discount_amount = 0, total, shippingAddress, paymentMethod } = body;
+
+    const { data: addr } = await supabase.from('addresses').insert({
+      user_id: user?.id || null, label: 'Shipping', street: shippingAddress.street,
+      city: shippingAddress.city, county: shippingAddress.county || shippingAddress.state,
+      country: shippingAddress.country || 'Kenya', postal_code: shippingAddress.postalCode || ''
+    }).select().single();
+
+    const year = new Date().getFullYear();
+    const { count } = await supabase.from('orders').select('*', { count: 'exact', head: true }).gte('created_at', `${year}-01-01`);
+    const orderNumber = `GRB-${year}-${String((count || 0) + 1).padStart(5, '0')}`;
+
+    const { data: order, error } = await supabase.from('orders').insert({
+      user_id: user?.id || null, order_number: orderNumber, subtotal: subtotal || total,
+      shipping_cost, discount_amount, total, shipping_address_id: addr?.id, payment_method: paymentMethod
+    }).select().single();
+    if (error) throw new Error(error.message);
+
+    for (const item of items) {
+      await supabase.from('order_items').insert({
+        order_id: order.id, product_id: item.productId || item.product?.id,
+        variant_id: item.variantId || null, quantity: item.quantity,
+        unit_price: item.price, total_price: item.price * item.quantity,
+        product_name: item.productName || item.product?.name,
+        variant_info: { size: item.size, color: item.color }
+      });
+    }
+    return { data: order };
+  },
+
+  getMyOrders: async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw Object.assign(new Error('Unauthorized'), { status: 401 });
+    const { data, error } = await supabase.from('orders').select('*, order_items(*)').eq('user_id', user.id).order('created_at', { ascending: false });
+    if (error) throw new Error(error.message);
+    return { data: data || [] };
+  },
+
+  getOrder: async (id: string) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw Object.assign(new Error('Unauthorized'), { status: 401 });
+    const { data, error } = await supabase.from('orders').select('*, order_items(*)').or(`id.eq.${id},order_number.eq.${id}`).single();
+    if (error) throw Object.assign(new Error('Order not found'), { status: 404 });
+    return { data };
+  },
+
+  cancelOrder: async (id: string) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw Object.assign(new Error('Unauthorized'), { status: 401 });
+    const { data, error } = await supabase.from('orders').update({ status: 'cancelled' }).or(`id.eq.${id},order_number.eq.${id}`).eq('user_id', user.id).select().single();
+    if (error) throw new Error(error.message);
+    return { data };
+  },
+
+  // ── Users ──────────────────────────────────────────────────────────────────
+  getProfile: async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw Object.assign(new Error('Unauthorized'), { status: 401 });
+    const { data } = await supabase.from('users').select('id,name,email,role,phone,avatar_url,created_at').eq('id', user.id).single();
+    return { data };
+  },
+
+  updateProfile: async (body: any) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw Object.assign(new Error('Unauthorized'), { status: 401 });
+    const { data } = await supabase.from('users').update({ ...body, updated_at: new Date().toISOString() }).eq('id', user.id).select('id,name,email,phone,avatar_url,role').single();
+    return { data };
+  },
+
+  getAddresses: async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw Object.assign(new Error('Unauthorized'), { status: 401 });
+    const { data } = await supabase.from('addresses').select('*').eq('user_id', user.id).order('is_default', { ascending: false });
+    return { data: data || [] };
+  },
+
+  addAddress: async (body: any) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw Object.assign(new Error('Unauthorized'), { status: 401 });
+    if (body.is_default) await supabase.from('addresses').update({ is_default: false }).eq('user_id', user.id);
+    const { data } = await supabase.from('addresses').insert({ user_id: user.id, ...body }).select().single();
+    return { data };
+  },
+
+  updateAddress: async (id: string, body: any) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw Object.assign(new Error('Unauthorized'), { status: 401 });
+    if (body.is_default) await supabase.from('addresses').update({ is_default: false }).eq('user_id', user.id);
+    const { data } = await supabase.from('addresses').update(body).eq('id', id).eq('user_id', user.id).select().single();
+    return { data };
+  },
+
+  deleteAddress: async (id: string) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw Object.assign(new Error('Unauthorized'), { status: 401 });
+    await supabase.from('addresses').delete().eq('id', id).eq('user_id', user.id);
+    return { data: { success: true } };
+  },
+
+  getWishlist: async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw Object.assign(new Error('Unauthorized'), { status: 401 });
+    const { data } = await supabase.from('wishlists').select('*, products(name,slug,price,compare_price,product_images(url,is_primary))').eq('user_id', user.id).order('created_at', { ascending: false });
+    return { data: data || [] };
+  },
+
+  addToWishlist: async (product_id: string) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw Object.assign(new Error('Unauthorized'), { status: 401 });
+    const { data } = await supabase.from('wishlists').insert({ user_id: user.id, product_id }).select().single();
+    return { data };
+  },
+
+  removeFromWishlist: async (productId: string) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw Object.assign(new Error('Unauthorized'), { status: 401 });
+    await supabase.from('wishlists').delete().eq('user_id', user.id).eq('product_id', productId);
+    return { data: { success: true } };
+  },
+
+  // ── Reviews ────────────────────────────────────────────────────────────────
+  getReviews: async (productId: string) => {
+    const { data } = await supabase.from('reviews').select('id,rating,title,body,anonymous,created_at,users(name,avatar_url)').eq('product_id', productId).eq('is_approved', true).order('created_at', { ascending: false });
+    const mapped = (data || []).map((r: any) => ({
+      ...r, user_name: r.anonymous ? 'Anonymous' : r.users?.name, avatar_url: r.anonymous ? null : r.users?.avatar_url, users: undefined
+    }));
+    return { data: mapped };
+  },
+
+  checkReviewed: async (productId: string) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { reviewed: false };
+    const { data } = await supabase.from('reviews').select('id').eq('product_id', productId).eq('user_id', user.id).single();
+    return { reviewed: !!data };
+  },
+
+  addReview: async (body: any) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw Object.assign(new Error('Unauthorized'), { status: 401 });
+    const { data, error } = await supabase.from('reviews').insert({ ...body, user_id: user.id }).select().single();
+    if (error) throw new Error(error.message);
+    return { data };
+  },
+
+  // ── Misc ───────────────────────────────────────────────────────────────────
+  subscribe: async (email: string) => {
+    const { error } = await supabase.from('newsletters').insert({ email });
+    if (error) throw new Error(error.message);
+    return { data: { success: true } };
+  },
+
+  validateCoupon: async (code: string, cart_total: number) => {
+    const { data: coupon, error } = await supabase.from('coupons').select('*').eq('code', code.toUpperCase()).eq('is_active', true).single();
+    if (error || !coupon) throw Object.assign(new Error('Invalid or expired coupon'), { status: 404 });
+    let discount = coupon.type === 'percentage' ? (cart_total * coupon.value) / 100 : coupon.value;
+    if (coupon.max_discount) discount = Math.min(discount, coupon.max_discount);
+    return { data: { coupon, discount } };
+  },
+
+  getSettings: async () => {
+    const { data } = await supabase.from('settings').select('key,value');
+    const map: Record<string, string> = {};
+    (data || []).forEach((r: any) => { map[r.key] = r.value; });
+    return { data: map };
+  },
+
+  saveSettings: async (body: Record<string, string>) => {
+    for (const [key, value] of Object.entries(body)) {
+      await supabase.from('settings').upsert({ key, value }, { onConflict: 'key' });
+    }
+    return { data: { success: true } };
+  },
+
+  // ── Notifications ──────────────────────────────────────────────────────────
+  getNotifications: async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw Object.assign(new Error('Unauthorized'), { status: 401 });
+    const { data } = await supabase.from('notifications').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(50);
+    return { data: (data || []).map((n: any) => ({ id: n.id, type: n.type, title: n.title, message: n.message, link: n.link, read: n.read, createdAt: n.created_at })) };
+  },
+
+  markNotificationRead: async (id: string) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw Object.assign(new Error('Unauthorized'), { status: 401 });
+    await supabase.from('notifications').update({ read: true }).eq('id', id).eq('user_id', user.id);
+    return { data: { success: true } };
+  },
+
+  markAllNotificationsRead: async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw Object.assign(new Error('Unauthorized'), { status: 401 });
+    await supabase.from('notifications').update({ read: true }).eq('user_id', user.id);
+    return { data: { success: true } };
+  },
+
+  deleteNotification: async (id: string) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw Object.assign(new Error('Unauthorized'), { status: 401 });
+    await supabase.from('notifications').delete().eq('id', id).eq('user_id', user.id);
+    return { data: { success: true } };
+  },
+
+  clearNotifications: async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw Object.assign(new Error('Unauthorized'), { status: 401 });
+    await supabase.from('notifications').delete().eq('user_id', user.id);
+    return { data: { success: true } };
+  },
+
+  // ── Admin ──────────────────────────────────────────────────────────────────
+  adminDashboard: async () => {
+    const [{ data: rev }, { count: orders }, { count: customers }, { data: lowStock }, { data: recentOrders }] = await Promise.all([
+      supabase.from('orders').select('total').eq('payment_status', 'paid'),
+      supabase.from('orders').select('*', { count: 'exact', head: true }),
+      supabase.from('users').select('*', { count: 'exact', head: true }).eq('role', 'customer'),
+      supabase.from('product_variants').select('stock_qty,products(name),size,color').lt('stock_qty', 5),
+      supabase.from('orders').select('*, users(name)').order('created_at', { ascending: false }).limit(10),
+    ]);
+    const revenue = (rev || []).reduce((s: number, r: any) => s + Number(r.total), 0);
+    return { data: { revenue, orders, customers, lowStock, recentOrders } };
+  },
+
+  adminGetUsers: async () => {
+    const { data } = await supabase.from('users').select('id,name,email,role,phone,avatar_url,created_at,orders(total)').order('created_at', { ascending: false });
+    return { data: data || [] };
+  },
+
+  adminGetOrders: async (params?: Record<string, string>) => {
+    const page = parseInt(params?.page || '1');
+    const limit = parseInt(params?.limit || '20');
+    let q = supabase.from('orders').select('*,users(name,email,phone),addresses(*),order_items(*)', { count: 'exact' }).order('created_at', { ascending: false }).range((page - 1) * limit, page * limit - 1);
+    if (params?.status) q = q.eq('status', params.status);
+    const { data } = await q;
+    return { data: data || [] };
+  },
+
+  adminUpdateOrder: async (id: string, body: any) => {
+    const { data } = await supabase.from('orders').update({ ...body, updated_at: new Date().toISOString() }).eq('id', id).select().single();
+    return { data };
+  },
+
+  adminGetProducts: async () => {
+    const { data } = await supabase.from('products').select('*,categories(name),product_variants(stock_qty),product_images(*)').order('created_at', { ascending: false });
+    return { data: data || [] };
+  },
+
+  adminCreateProduct: async (body: any) => {
+    const { name, description, short_description, price, compare_price, sku, category_id, is_featured, is_new, tags, variants = [], images = [] } = body;
+    let slug = body.slug?.trim() || name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    const { data: product } = await supabase.from('products').insert({ name, slug, description, short_description, price, compare_price: compare_price || null, sku: sku?.trim() || null, category_id, is_featured: is_featured || false, is_new: is_new || false, tags: tags || [] }).select().single();
+    for (const v of variants) await supabase.from('product_variants').insert({ product_id: product.id, ...v });
+    for (let i = 0; i < images.length; i++) await supabase.from('product_images').insert({ product_id: product.id, url: images[i].url, alt_text: images[i].alt_text || name, sort_order: i, is_primary: i === 0 });
+    return { data: product };
+  },
+
+  adminUpdateProduct: async (id: string, body: any) => {
+    const { images, ...fields } = body;
+    const { data: product } = await supabase.from('products').update({ ...fields, updated_at: new Date().toISOString() }).eq('id', id).select().single();
+    if (Array.isArray(images)) {
+      await supabase.from('product_images').delete().eq('product_id', id);
+      for (let i = 0; i < images.length; i++) {
+        const url = typeof images[i] === 'string' ? images[i] : images[i].url;
+        if (url) await supabase.from('product_images').insert({ product_id: id, url, alt_text: images[i].alt_text || fields.name, sort_order: i, is_primary: i === 0 });
+      }
+    }
+    return { data: product };
+  },
+
+  adminDeleteProduct: async (id: string) => {
+    await supabase.from('products').update({ is_active: false }).eq('id', id);
+    return { data: { success: true } };
+  },
+
+  adminGetCategories: async () => {
+    const { data } = await supabase.from('categories').select('*,products(count)').order('sort_order');
+    return { data: data || [] };
+  },
+
+  adminCreateCategory: async (body: any) => {
+    const { name, description, image_url } = body;
+    const slug = name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    const { data } = await supabase.from('categories').insert({ name: name.trim(), slug, description: description || null, image_url: image_url || null }).select().single();
+    return { data };
+  },
+
+  adminUpdateCategory: async (id: string, body: any) => {
+    const { data } = await supabase.from('categories').update(body).eq('id', id).select().single();
+    return { data };
+  },
+
+  adminDeleteCategory: async (id: string) => {
+    await supabase.from('categories').delete().eq('id', id);
+    return { data: { success: true } };
+  },
+
+  adminGetInventory: async () => {
+    const { data } = await supabase.from('product_variants').select('*,products(id,name,slug,sku,categories(name),product_images(url,is_primary))').order('stock_qty');
+    return { data: data || [] };
+  },
+
+  adminUpdateStock: async (variantId: string, stock_qty: number) => {
+    const { data } = await supabase.from('product_variants').update({ stock_qty }).eq('id', variantId).select().single();
+    return { data };
+  },
+
+  adminGetCoupons: async () => {
+    const { data } = await supabase.from('coupons').select('*').order('created_at', { ascending: false });
+    return { data: data || [] };
+  },
+
+  adminCreateCoupon: async (body: any) => {
+    const { data } = await supabase.from('coupons').insert({ ...body, code: body.code.toUpperCase() }).select().single();
+    return { data };
+  },
+
+  adminGetReviews: async () => {
+    const { data } = await supabase.from('reviews').select('*,users(name,email,avatar_url),products(name,slug,product_images(url,is_primary))').order('created_at', { ascending: false });
+    return { data: data || [] };
+  },
+
+  adminUpdateReview: async (id: string, body: any) => {
+    const { data } = await supabase.from('reviews').update(body).eq('id', id).select().single();
+    return { data };
+  },
+
+  adminDeleteReview: async (id: string) => {
+    await supabase.from('reviews').delete().eq('id', id);
+    return { data: { success: true } };
+  },
+
+  adminGetNewsletter: async () => {
+    const { data } = await supabase.from('newsletters').select('*').order('created_at', { ascending: false });
+    return { data: data || [] };
+  },
+
+  adminToggleSubscriber: async (id: string, is_active: boolean) => {
+    const { data } = await supabase.from('newsletters').update({ is_active }).eq('id', id).select().single();
+    return { data };
+  },
+
+  adminDeleteSubscriber: async (id: string) => {
+    await supabase.from('newsletters').delete().eq('id', id);
+    return { data: { success: true } };
+  },
+
+  adminGetAdmins: async () => {
+    const { data } = await supabase.from('users').select('id,name,email,created_at').eq('role', 'admin').order('created_at');
+    return { data: data || [] };
+  },
 };

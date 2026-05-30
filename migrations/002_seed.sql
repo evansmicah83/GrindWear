@@ -64,5 +64,5 @@ ON CONFLICT (code) DO NOTHING;
 
 -- Seed admin user (password: admin123)
 INSERT INTO users (name, email, password_hash, role) VALUES
-  ('Admin', 'admin@grindbyte.com', '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj4J/HS.iK8i', 'admin')
+  ('Admin', 'admin@grindbyte.com', '$2b$12$8MQ0ClBfaXoeTlePG3JhS.5JEz7Mb8.DYUTIIEU9DqNeYq5wF8.Va', 'admin')
 ON CONFLICT (email) DO NOTHING;

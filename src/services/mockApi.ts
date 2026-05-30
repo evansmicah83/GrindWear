@@ -12,30 +12,23 @@ function normalizeDbImage(img: any): string {
 
 // Adapter: maps backend snake_case shape to frontend camelCase Product type
 function mapProduct(p: any): Product {
-  // Sort images so primary comes first, then by sort_order
-  const sortedImages = Array.isArray(p.images)
-    ? [...p.images].sort((a: any, b: any) => {
-        if (a?.is_primary && !b?.is_primary) return -1;
-        if (!a?.is_primary && b?.is_primary) return 1;
-        return (a?.sort_order ?? 0) - (b?.sort_order ?? 0);
-      })
-    : [];
+  const rawImages = Array.isArray(p.product_images) ? p.product_images : Array.isArray(p.images) ? p.images : [];
+  const rawVariants = Array.isArray(p.product_variants) ? p.product_variants : Array.isArray(p.variants) ? p.variants : [];
+  const rawReviews = Array.isArray(p.reviews) ? p.reviews : [];
 
-  // Normalize each image URL (handles raw base64, data URIs, and https URLs)
-  const images = sortedImages
-    .map(normalizeDbImage)
-    .filter(Boolean);
+  const sortedImages = [...rawImages].sort((a: any, b: any) => {
+    if (a?.is_primary && !b?.is_primary) return -1;
+    if (!a?.is_primary && b?.is_primary) return 1;
+    return (a?.sort_order ?? 0) - (b?.sort_order ?? 0);
+  });
 
-  const sizes: string[] = Array.isArray(p.variants)
-    ? [...new Set(p.variants.filter(Boolean).map((v: any) => v.size).filter(Boolean))] as string[]
-    : [];
+  const images = sortedImages.map(normalizeDbImage).filter(Boolean);
 
-  const colors: string[] = Array.isArray(p.variants)
-    ? [...new Set(p.variants.filter(Boolean).map((v: any) => v.color).filter(Boolean))] as string[]
-    : [];
-
-  const stock: number = Array.isArray(p.variants)
-    ? p.variants.filter(Boolean).reduce((sum: number, v: any) => sum + (parseInt(v.stock_qty) || 0), 0)
+  const sizes = [...new Set(rawVariants.filter(Boolean).map((v: any) => v.size).filter(Boolean))] as string[];
+  const colors = [...new Set(rawVariants.filter(Boolean).map((v: any) => v.color).filter(Boolean))] as string[];
+  const stock = rawVariants.filter(Boolean).reduce((sum: number, v: any) => sum + (parseInt(v.stock_qty) || 0), 0);
+  const rating = rawReviews.length
+    ? rawReviews.reduce((sum: number, r: any) => sum + (parseFloat(r.rating) || 0), 0) / rawReviews.length
     : 0;
 
   return {
@@ -45,7 +38,7 @@ function mapProduct(p: any): Product {
     description: p.description || '',
     price: parseFloat(p.price),
     compareAtPrice: p.compare_price ? parseFloat(p.compare_price) : undefined,
-    category: p.category_slug || p.category || '',
+    category: p.categories?.slug || p.category_slug || p.category || '',
     images,
     sizes,
     colors,
@@ -53,19 +46,25 @@ function mapProduct(p: any): Product {
     stock,
     featured: p.is_featured || false,
     trending: p.is_new || false,
-    rating: parseFloat(p.rating) || 0,
-    reviewCount: parseInt(p.review_count) || 0,
+    rating,
+    reviewCount: rawReviews.length,
     createdAt: p.created_at,
   };
 }
 
 function mapCategory(c: any): Category {
+  const productCount =
+    parseInt(c.product_count, 10) ||
+    parseInt(c.products?.[0]?.count, 10) ||
+    parseInt(c.products_count, 10) ||
+    0;
+
   return {
     id: c.id,
     name: c.name,
     slug: c.slug,
     image: c.image_url || '',
-    productCount: parseInt(c.product_count) || 0,
+    productCount,
   };
 }
 

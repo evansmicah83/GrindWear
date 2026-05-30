@@ -5,8 +5,6 @@ import { Footer } from './Footer';
 import { CartDrawer } from '../components/CartDrawer';
 import { FloatingCart } from '../components/FloatingCart';
 import { MobileNav } from './MobileNav';
-import { WhatsAppChat } from '../app/components/WhatsAppChat';
-import { BottomNav } from '../app/components/BottomNav';
 import { api } from '../services/api';
 import { AlertTriangle } from 'lucide-react';
 
@@ -47,8 +45,6 @@ export function MainLayout({ children, hideFooter = false }: MainLayoutProps) {
       {!hideFooter && <Footer />}
       <CartDrawer />
       <FloatingCart />
-      <WhatsAppChat />
-      <BottomNav />
       <MobileNav />
     </div>
   );
