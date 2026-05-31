@@ -1,14 +1,16 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import type { User } from '../types';
-import { supabase, isSupabaseConfigured } from '../lib/supabase/client';
+import { supabase, supabaseAdmin, isSupabaseConfigured } from '../lib/supabase/client';
 
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  isVerified: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (data: { email: string; password: string; name: string }) => Promise<void>;
   logout: () => Promise<void>;
+  resendVerificationEmail: (email: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -22,6 +24,8 @@ function mapUser(sbUser: any, profile: any): User {
     avatar: profile?.avatar_url || undefined,
     phone: profile?.phone || undefined,
     createdAt: sbUser.created_at,
+    emailVerified: !!sbUser.email_confirmed_at,
+    verificationSent: profile?.verification_sent || false,
   };
 }
 
@@ -38,7 +42,7 @@ async function fetchProfileSafely(userId: string) {
   try {
     const { data, error } = await supabase
       .from('users')
-      .select('id,name,email,role,phone,avatar_url,created_at')
+      .select('id,name,email,role,phone,avatar_url,created_at,verification_sent')
       .eq('id', userId)
       .maybeSingle();
     
@@ -53,10 +57,12 @@ async function fetchProfileSafely(userId: string) {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isVerified, setIsVerified] = useState(false);
 
   async function loadUser(sbUser: any) {
     if (!sbUser) {
       setUser(null);
+      setIsVerified(false);
       return;
     }
 
@@ -64,7 +70,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const profile = await fetchProfileSafely(sbUser.id);
     
     // Set user with profile if available, otherwise with just auth data
-    setUser(mapUser(sbUser, profile));
+    const mappedUser = mapUser(sbUser, profile);
+    setUser(mappedUser);
+    setIsVerified(mappedUser.emailVerified || false);
   }
 
   useEffect(() => {
@@ -171,10 +179,54 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     await supabase.auth.signOut();
     setUser(null);
+    setIsVerified(false);
+  };
+
+  const resendVerificationEmail = async (email: string) => {
+    if (!isSupabaseConfigured || !supabase) {
+      throw new Error('Supabase is not configured.');
+    }
+
+    // Mark in users table that verification was sent
+    if (user?.id) {
+      await supabase
+        .from('users')
+        .update({ verification_sent: true, updated_at: new Date().toISOString() })
+        .eq('id', user.id);
+    }
+
+    // Use admin client to generate verification link
+    if (supabaseAdmin) {
+      const { data, error } = await supabaseAdmin.auth.admin.generateLink({
+        type: 'signup',
+        email: email.trim(),
+      });
+
+      if (error) {
+        console.error('[Auth] Error generating verification link:', error);
+        throw new Error('Failed to send verification email. Please try again.');
+      }
+
+      // In production, you would send this link via email
+      // For now, log it so you can test
+      console.log('[Auth] Verification link generated:', data?.properties?.action_link);
+    } else {
+      // Fallback: just log that we would send it
+      console.warn('[Auth] Admin client not configured. Verification email not sent.');
+    }
   };
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated: !!user, isLoading, login, register, logout }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      isAuthenticated: !!user, 
+      isLoading, 
+      isVerified,
+      login, 
+      register, 
+      logout,
+      resendVerificationEmail 
+    }}>
       {children}
     </AuthContext.Provider>
   );

@@ -6,6 +6,8 @@ export interface User {
   avatar?: string;
   phone?: string;
   createdAt: string;
+  emailVerified?: boolean;
+  verificationSent?: boolean;
 }
 
 export interface ProductVariant {
