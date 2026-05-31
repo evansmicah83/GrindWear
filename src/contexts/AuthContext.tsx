@@ -34,19 +34,33 @@ function mapUser(sbUser: any, profile: any): User {
  * Returns null if not found or if there's an error (RLS, network, etc.)
  * Does NOT throw errors - just returns null on failure.
  */
-async function fetchProfileSafely(userId: string) {
+async function fetchProfileSafely(userId: string, email?: string) {
   if (!isSupabaseConfigured || !supabase) {
     return null;
   }
   
   try {
+    // Try by ID first (standard foreign key relationship)
     const { data, error } = await supabase
       .from('users')
       .select('id,name,email,role,phone,avatar_url,created_at,verification_sent')
       .eq('id', userId)
       .maybeSingle();
     
-    return data || null;
+    if (data) return data;
+    
+    // Fallback: try by email if ID doesn't match (for existing users)
+    if (email) {
+      const { data: emailData } = await supabase
+        .from('users')
+        .select('id,name,email,role,phone,avatar_url,created_at,verification_sent')
+        .eq('email', email)
+        .maybeSingle();
+      
+      if (emailData) return emailData;
+    }
+    
+    return null;
   } catch (err: any) {
     // Silently handle any errors (RLS, network, etc.)
     console.warn('Could not fetch user profile:', err?.message);
@@ -67,7 +81,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     // Fetch profile from users table (with error handling)
-    const profile = await fetchProfileSafely(sbUser.id);
+    const profile = await fetchProfileSafely(sbUser.id, sbUser.email);
     
     // Set user with profile if available, otherwise with just auth data
     const mappedUser = mapUser(sbUser, profile);
