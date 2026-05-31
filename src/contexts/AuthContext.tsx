@@ -115,21 +115,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
     
     if (error) {
-      // Enhanced error handling for Supabase auth errors
-      const errorMsg = error.message.toLowerCase();
+      // Log the full error for debugging
+      console.error('[Supabase Auth Error]', {
+        message: error.message,
+        status: error.status,
+        code: error.code,
+      });
+
+      const errorMsg = error.message?.toLowerCase() || '';
+      const errorStatus = error?.status;
       
-      if (errorMsg.includes('email not confirmed')) {
-        throw new Error('Please confirm your email. Check your inbox for the confirmation link.');
-      } else if (errorMsg.includes('invalid credentials') || errorMsg.includes('invalid login')) {
+      // Email not verified - MOST COMMON ISSUE
+      if (errorMsg.includes('email not confirmed') ||
+          errorMsg.includes('not confirmed') ||
+          errorMsg.includes('unconfirmed') ||
+          errorMsg.includes('verify') ||
+          errorMsg.includes('confirmation') ||
+          errorStatus === 400) {
+        
+        throw new Error(
+          '❌ ACTION REQUIRED: Email confirmation is ENABLED in Supabase. ' +
+          'Go to https://app.supabase.com/project/msgrvhnnaldxrovwzzjz/auth/settings ' +
+          'and TOGGLE OFF "Enable email confirmations". Then redeploy.'
+        );
+      }
+      else if (errorMsg.includes('invalid credentials') || errorMsg.includes('invalid login')) {
         throw new Error('Invalid email or password.');
       } else if (errorMsg.includes('user not found') || errorMsg.includes('does not exist')) {
-        throw new Error('No account found with this email.');
+        throw new Error('No account found with this email. Please sign up first.');
       } else if (errorMsg.includes('disabled') || errorMsg.includes('banned')) {
         throw new Error('This account has been disabled.');
       } else if (errorMsg.includes('rate limit') || errorMsg.includes('too many requests')) {
-        throw new Error('Too many login attempts. Please wait and try again.');
+        throw new Error('Too many login attempts. Please wait 5 minutes and try again.');
       } else if (errorMsg.includes('weak password') || errorMsg.includes('password should')) {
-        throw new Error('Password is too weak.');
+        throw new Error('Password is too weak. Must be at least 6 characters.');
       } else {
         throw new Error(error.message || 'Login failed. Please try again.');
       }
