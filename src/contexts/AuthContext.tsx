@@ -123,20 +123,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
 
       const errorMsg = error.message?.toLowerCase() || '';
+      const errorCode = error?.code;
       const errorStatus = error?.status;
       
-      // Email not verified - MOST COMMON ISSUE
+      // Email not verified - Supabase returns 400 with 'invalid_credentials' for unverified emails
       if (errorMsg.includes('email not confirmed') ||
           errorMsg.includes('not confirmed') ||
           errorMsg.includes('unconfirmed') ||
           errorMsg.includes('verify') ||
           errorMsg.includes('confirmation') ||
-          errorStatus === 400) {
+          (errorCode === 'invalid_credentials' && errorStatus === 400)) {
         
         throw new Error(
-          '❌ ACTION REQUIRED: Email confirmation is ENABLED in Supabase. ' +
-          'Go to https://app.supabase.com/project/msgrvhnnaldxrovwzzjz/auth/settings ' +
-          'and TOGGLE OFF "Enable email confirmations". Then redeploy.'
+          '❌ EMAIL NOT VERIFIED - You MUST disable email confirmation in Supabase! ' +
+          'Go to: https://app.supabase.com/project/msgrvhnnaldxrovwzzjz/auth/settings ' +
+          '→ Toggle OFF "Enable email confirmations" → Save → Redeploy Vercel'
         );
       }
       else if (errorMsg.includes('invalid credentials') || errorMsg.includes('invalid login')) {
