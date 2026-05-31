@@ -187,6 +187,7 @@ export function AdminLoginPage() {
                     onChange={e => setEmail(e.target.value)}
                     required
                     placeholder="name@company.com"
+                    autoComplete="email"
                     className="w-full rounded-2xl border border-gray-200 bg-gray-50 py-3.5 pl-11 pr-4 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-100"
                   />
                 </div>
@@ -202,6 +203,7 @@ export function AdminLoginPage() {
                     onChange={e => setPassword(e.target.value)}
                     required
                     placeholder="Enter your password"
+                    autoComplete="current-password"
                     className="w-full rounded-2xl border border-gray-200 bg-gray-50 py-3.5 pl-11 pr-11 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-100"
                   />
                   <button
