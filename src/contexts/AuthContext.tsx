@@ -83,8 +83,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Fetch profile from users table (with error handling)
     const profile = await fetchProfileSafely(sbUser.id, sbUser.email);
     
+    // Debug logging for role issues
+    console.log('[Auth] Auth user:', { id: sbUser.id, email: sbUser.email });
+    console.log('[Auth] Profile from DB:', profile);
+    
     // Set user with profile if available, otherwise with just auth data
     const mappedUser = mapUser(sbUser, profile);
+    console.log('[Auth] Mapped user role:', mappedUser.role);
+    
     setUser(mappedUser);
     setIsVerified(mappedUser.emailVerified || false);
   }
