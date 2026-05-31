@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import type { User } from '../types';
-import { supabase, supabaseAdmin, isSupabaseConfigured } from '../lib/supabase/client';
+import { supabase, isSupabaseConfigured } from '../lib/supabase/client';
 
 interface AuthContextType {
   user: User | null;
@@ -187,33 +187,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       throw new Error('Supabase is not configured.');
     }
 
+    // Use the regular auth client to resend OTP (works with anon key)
+    const { error } = await supabase.auth.resendOtp({
+      type: 'signup',
+      email: email.trim(),
+      options: {
+        emailRedirectTo: window.location.origin,
+      },
+    });
+
+    if (error) {
+      console.error('[Auth] Error resending verification:', error);
+      throw new Error(error.message || 'Failed to send verification email. Please try again.');
+    }
+
     // Mark in users table that verification was sent
     if (user?.id) {
       await supabase
         .from('users')
         .update({ verification_sent: true, updated_at: new Date().toISOString() })
-        .eq('id', user.id);
+        .eq('id', user.id)
+        .catch((err) => console.warn('Could not update verification_sent:', err));
     }
 
-    // Use admin client to generate verification link
-    if (supabaseAdmin) {
-      const { data, error } = await supabaseAdmin.auth.admin.generateLink({
-        type: 'signup',
-        email: email.trim(),
-      });
-
-      if (error) {
-        console.error('[Auth] Error generating verification link:', error);
-        throw new Error('Failed to send verification email. Please try again.');
-      }
-
-      // In production, you would send this link via email
-      // For now, log it so you can test
-      console.log('[Auth] Verification link generated:', data?.properties?.action_link);
-    } else {
-      // Fallback: just log that we would send it
-      console.warn('[Auth] Admin client not configured. Verification email not sent.');
-    }
+    console.log('[Auth] Verification email resent successfully');
   };
 
   return (

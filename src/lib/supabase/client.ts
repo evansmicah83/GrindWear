@@ -2,7 +2,6 @@ import { createClient } from '@supabase/supabase-js';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
-const SUPABASE_SERVICE_KEY = import.meta.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
   // Avoid hard crash during runtime; log and let auth calls fail with clearer errors.
@@ -21,11 +20,6 @@ export const supabase = SUPABASE_URL && SUPABASE_ANON_KEY
         autoRefreshToken: true,
       },
     })
-  : null;
-
-// Admin client for server-side operations (email verification, etc.)
-export const supabaseAdmin = SUPABASE_URL && SUPABASE_SERVICE_KEY
-  ? createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY)
   : null;
 
 export const isSupabaseConfigured = !!supabase;
